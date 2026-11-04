@@ -1,0 +1,27 @@
+{
+  "name": "kundalik",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.4.4",
+    "@capacitor/app": "7.1.0",
+    "@capacitor/core": "7.4.4",
+    "@capacitor/local-notifications": "7.0.3",
+    "@capacitor/status-bar": "7.0.3",
+    "@fontsource-variable/onest": "5.2.5",
+    "firebase": "11.10.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "7.4.4",
+    "@vitejs/plugin-react": "4.7.0",
+    "vite": "6.3.5"
+  }
+}

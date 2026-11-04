@@ -1,0 +1,16 @@
+{
+  "name": "Kundalik",
+  "short_name": "Kundalik",
+  "description": "Vazifalar, rejalar, g'oyalar, moliya va kitoblar bir joyda",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F1F3F6",
+  "theme_color": "#141921",
+  "lang": "uz",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,92 @@
+# Har safar main tarmog'iga kod yuklanganda:
+#  1) kompyuter (brauzer) versiyasi GitHub Pages'ga joylanadi
+#  2) Android APK yig'iladi va "Releases" bo'limiga qo'yiladi
+name: Ilovani yig'ish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Kompyuter versiyasi
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap add android
+
+      - name: Ikonka, ochilish ekrani va ruxsatlar
+        run: |
+          find android/app/src/main/res -name 'splash.png' -delete
+          cp -r android-res/res/. android/app/src/main/res/
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />#' android/app/src/main/AndroidManifest.xml
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          npx cap sync android
+
+      - name: APK yig'ish
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          cd android
+          chmod +x gradlew
+          if [ -n "$KEYSTORE_PASSWORD" ]; then
+            ./gradlew assembleRelease --no-daemon \
+              -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/android-res/kundalik.p12" \
+              -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+              -Pandroid.injected.signing.key.alias=kundalik \
+              -Pandroid.injected.signing.key.password="$KEYSTORE_PASSWORD"
+            cp app/build/outputs/apk/release/app-release.apk ../Kundalik.apk
+          else
+            echo "::warning::KEYSTORE_PASSWORD topilmadi, vaqtinchalik kalit bilan yig'ilmoqda"
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../Kundalik.apk
+          fi
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Kundalik 1.0.${{ github.run_number }}
+          body: Telefoningizda shu sahifani oching va pastdagi **Kundalik.apk** faylini yuklab o'rnating.
+          files: Kundalik.apk
+          make_latest: true
