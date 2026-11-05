@@ -3,7 +3,7 @@ import { useData } from '../data.jsx';
 import { useApp } from '../appctx.js';
 import { Icon, Segmented, Empty, Check } from '../ui.jsx';
 import { today, monthKey, shiftMonth, monthLabel, money, fmtDate, catColor, MONTHS } from '../util.js';
-import { monthTotals, limitState } from '../finance-logic.js';
+import { monthTotals, limitState, yearTotals, parseShopList } from '../finance-logic.js';
 import { Debts, isClosed } from '../debts.jsx';
 
 export default function Finance({ sub, setSub }) {
@@ -11,6 +11,9 @@ export default function Finance({ sub, setSub }) {
   const db = useData();
   const tab = sub || 'tx';
   const [key, setKey] = useState(monthKey(today()));
+  const [period, setPeriod] = useState('year');
+  const [year, setYear] = useState(new Date().getFullYear());
+  const thisYear = new Date().getFullYear();
   const shopLeft = db.shop.filter((s) => !s.bought).length;
   const debtOpen = db.debts.filter((d) => !isClosed(d)).length;
   return (
@@ -25,7 +28,17 @@ export default function Finance({ sub, setSub }) {
         </div>
       </header>
       <Segmented compact options={[{ v: 'tx', l: 'Hisob' }, { v: 'shop', l: 'Bozorlik', n: shopLeft || null }, { v: 'debts', l: 'Qarzlar', n: debtOpen || null }, { v: 'report', l: 'Hisobot' }]} value={tab} onChange={setSub} />
-      {(tab === 'tx' || tab === 'report') && (
+      {tab === 'report' && (
+        <Segmented small options={[{ v: 'month', l: 'Oylik' }, { v: 'year', l: 'Yillik' }]} value={period} onChange={setPeriod} />
+      )}
+      {tab === 'report' && period === 'year' && (
+        <div className="month-switch">
+          <button className="icon-btn" onClick={() => setYear(year - 1)} aria-label="Oldingi yil"><Icon name="left" /></button>
+          <span>{year}-yil</span>
+          <button className="icon-btn" onClick={() => setYear(year + 1)} disabled={year >= thisYear} aria-label="Keyingi yil"><Icon name="right" /></button>
+        </div>
+      )}
+      {(tab === 'tx' || (tab === 'report' && period === 'month')) && (
         <div className="month-switch">
           <button className="icon-btn" onClick={() => setKey(shiftMonth(key, -1))} aria-label="Oldingi oy"><Icon name="left" /></button>
           <span>{monthLabel(key)}</span>
@@ -35,7 +48,8 @@ export default function Finance({ sub, setSub }) {
       {tab === 'tx' && <Ledger mkey={key} />}
       {tab === 'shop' && <Shopping />}
       {tab === 'debts' && <Debts />}
-      {tab === 'report' && <Report mkey={key} />}
+      {tab === 'report' && period === 'month' && <Report mkey={key} />}
+      {tab === 'report' && period === 'year' && <YearReport year={year} onMonth={(k) => { setKey(k); setPeriod('month'); }} />}
     </div>
   );
 }
@@ -106,21 +120,42 @@ function Shopping() {
   const [name, setName] = useState('');
   const left = db.shop.filter((s) => !s.bought);
   const bought = db.shop.filter((s) => s.bought);
+  const addText = (text) => {
+    const items = parseShopList(text);
+    items.forEach((it, i) => db.add('shop', { ...it, price: 0, bought: false, pos: i }));
+    if (items.length > 1) app.toast(`${items.length} ta mahsulot qo'shildi`);
+    return items.length;
+  };
   const add = () => {
-    const n = name.trim();
-    if (!n) return;
-    // "Guruch 2 kg" -> nom va miqdor
-    const m = n.match(/^(.*?)\s+(\d+[.,]?\d*\s*(kg|g|gr|l|litr|ta|dona|quti|paket|bog'?)?)$/i);
-    db.add('shop', { name: m ? m[1] : n, qty: m ? m[2] : '', price: 0, bought: false });
+    if (!name.trim()) return;
+    addText(name);
     setName('');
+  };
+  const onPaste = (e) => {
+    const text = e.clipboardData?.getData('text') || '';
+    if (/[\n,;]/.test(text.trim())) {
+      e.preventDefault();
+      addText(text);
+      setName('');
+    }
+  };
+  const copyList = async () => {
+    const lines = left.map((s, i) => `${i + 1}. ${s.name}${s.qty ? ' — ' + s.qty : ''}`);
+    const text = "Bozorlik ro'yxati:\n" + lines.join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      app.toast("Ro'yxat nusxalandi. Endi Telegram'ga qo'yishingiz mumkin");
+    } catch {
+      app.toast("Nusxalab bo'lmadi", 'warn');
+    }
   };
   const sumBought = bought.reduce((a, s) => a + (s.price || 0), 0);
   const sumAll = db.shop.reduce((a, s) => a + (s.price || 0), 0);
-  const Item = ({ s }) => (
+  const Item = ({ s, n }) => (
     <li className={'shop-row' + (s.bought ? ' is-done' : '')} onClick={() => db.update('shop', s.id, { bought: !s.bought })}>
       <Check state={s.bought ? 'done' : 'todo'} color="var(--c-money)" onClick={() => db.update('shop', s.id, { bought: !s.bought })} label="Olindi" />
       <div className="tr-main">
-        <div className="tr-title">{s.name}</div>
+        <div className="tr-title"><span className="num">{n}.</span> {s.name}</div>
         {s.qty && <div className="tr-sub">{s.qty}</div>}
       </div>
       {s.price > 0 && <span className="shop-price">{money(s.price)}</span>}
@@ -130,23 +165,27 @@ function Shopping() {
   return (
     <>
       <div className="inline-add big">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Mahsulot, masalan: Guruch 2 kg" onKeyDown={(e) => e.key === 'Enter' && add()} aria-label="Mahsulot nomi" />
+        <input value={name} onChange={(e) => setName(e.target.value)} onPaste={onPaste} placeholder="Mahsulot, masalan: Guruch 2 kg" onKeyDown={(e) => e.key === 'Enter' && add()} aria-label="Mahsulot nomi" />
         <button className="btn primary" onClick={add} disabled={!name.trim()} aria-label="Qo'shish"><Icon name="plus" size={18} /></button>
       </div>
+      <div className="shop-tools">
+        <button className="btn soft" onClick={() => app.openSheet('shoplist')}><Icon name="list" size={18} /> Ro'yxatni tashlash</button>
+        {left.length > 0 && <button className="btn ghost" onClick={copyList}><Icon name="quote" size={18} /> Nusxalash</button>}
+      </div>
       {db.shop.length === 0 ? (
-        <Empty icon="cart" title="Ro'yxat bo'sh" text="Bozorga borishdan oldin kerakli narsalarni yozib qo'ying. Do'konda olganlaringizni belgilab borasiz." />
+        <Empty icon="cart" title="Ro'yxat bo'sh" text="Mahsulotni yozing yoki tayyor ro'yxatni nusxalab tashlang: ilova uni o'zi mahsulotlarga ajratib, raqamlab chiqadi." />
       ) : (
         <>
           {left.length > 0 && (
             <section className="group">
               <h3 className="group-t">Olinadi <span>{left.length}</span></h3>
-              <ul className="list">{left.map((s) => <Item key={s.id} s={s} />)}</ul>
+              <ul className="list">{left.map((s, i) => <Item key={s.id} s={s} n={i + 1} />)}</ul>
             </section>
           )}
           {bought.length > 0 && (
             <section className="group">
               <h3 className="group-t">Olindi <span>{bought.length}</span>{sumBought > 0 && <span className="day-sum">{money(sumBought)} so'm</span>}</h3>
-              <ul className="list">{bought.map((s) => <Item key={s.id} s={s} />)}</ul>
+              <ul className="list">{bought.map((s, i) => <Item key={s.id} s={s} n={i + 1} />)}</ul>
             </section>
           )}
           {sumAll > 0 && <p className="muted small center">Narxi yozilganlar bo'yicha taxminiy jami: {money(sumAll)} so'm</p>}
@@ -155,7 +194,7 @@ function Shopping() {
       {bought.length > 0 && (
         <div className="shop-actions">
           <button className="btn ghost" onClick={() => { bought.forEach((s) => db.remove('shop', s.id)); app.toast(`${bought.length} ta mahsulot ro'yxatdan olindi`); }}>
-            <Icon name="trash" size={18} /> Olinganlarni o'chirish
+            <Icon name="trash" size={18} /> O'chirish
           </button>
           <button className="btn primary" onClick={() => app.openSheet('spend')}>
             <Icon name="wallet" size={18} /> Xarajatga yozish
@@ -237,6 +276,92 @@ function Report({ mkey }) {
         </div>
         <div className="legend"><span><i className="h-in" /> Kirim</span><span><i className="h-out" /> Chiqim</span></div>
       </section>
+    </>
+  );
+}
+
+function YearReport({ year, onMonth }) {
+  const db = useData();
+  const y = yearTotals(db.tx, year);
+  const cats = db.settings.expenseCats;
+  const now = new Date();
+  const monthsPassed = year < now.getFullYear() ? 12 : year === now.getFullYear() ? now.getMonth() + 1 : 0;
+  const activeMonths = Math.max(1, y.months.filter((m) => m.income || m.expense).length || monthsPassed || 1);
+  const rows = Object.entries(y.byCat).sort((a, b) => b[1] - a[1]);
+  const inc = Object.entries(y.incByCat).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...y.months.flatMap((m) => [m.income, m.expense]));
+  const top = y.months.reduce((best, m, i) => (m.expense > (best?.v || 0) ? { i, v: m.expense } : best), null);
+  const curKey = monthKey(today());
+
+  return (
+    <>
+      <section className="summary">
+        <div className="sum-main">
+          <span>{year}-yil qoldig'i</span>
+          <b className={y.balance < 0 ? 'neg' : ''}>{money(y.balance)} <small>so'm</small></b>
+        </div>
+        <div className="sum-io static">
+          <div><span className="io-l in"><Icon name="up" size={14} /> Kirim</span><b>{money(y.income)}</b></div>
+          <div><span className="io-l out"><Icon name="down" size={14} /> Chiqim</span><b>{money(y.expense)}</b></div>
+        </div>
+        <div className="year-facts">
+          <div><span>Oyiga o'rtacha chiqim</span><b>{money(y.expense / activeMonths)}</b></div>
+          {top && <div><span>Eng ko'p sarflangan oy</span><b>{MONTHS[top.i]}</b></div>}
+        </div>
+      </section>
+
+      <section className="card report-card">
+        <div className="card-head"><h2>12 oy</h2></div>
+        <div className="hist year" role="img" aria-label={`${year}-yil oylar bo'yicha kirim va chiqim`}>
+          {y.months.map((m, i) => {
+            const k = `${year}-${String(i + 1).padStart(2, '0')}`;
+            const future = k > curKey;
+            return (
+              <button key={k} className={'h-col' + (k === curKey ? ' cur' : '') + (future ? ' future' : '')} onClick={() => !future && onMonth(k)} disabled={future} title={`${MONTHS[i]}: kirim ${money(m.income)}, chiqim ${money(m.expense)}`}>
+                <div className="h-bars">
+                  <div className="h-in" style={{ height: (m.income / max) * 100 + '%' }} />
+                  <div className="h-out" style={{ height: (m.expense / max) * 100 + '%' }} />
+                </div>
+                <span className="h-l">{MONTHS[i].slice(0, 3)}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="legend"><span><i className="h-in" /> Kirim</span><span><i className="h-out" /> Chiqim</span><span className="muted">Oyni bossangiz, o'sha oy ochiladi</span></div>
+      </section>
+
+      <section className="card report-card">
+        <div className="card-head"><h2>Chiqimlar</h2><span className="card-meta">{money(y.expense)} so'm</span></div>
+        {rows.length === 0 && <div className="calm">Bu yilda chiqim yozilmagan.</div>}
+        <ul className="cat-bars">
+          {rows.map(([c, v]) => {
+            const color = catColor(c, cats);
+            return (
+              <li key={c}>
+                <div className="cb-row">
+                  <span className="dot" style={{ background: color }} />
+                  <span className="cb-name">{c}</span>
+                  <span className="cb-val">{money(v)}</span>
+                  <span className="cb-pct">{y.expense ? Math.round((v / y.expense) * 100) : 0}%</span>
+                </div>
+                <div className="cb-bar"><div style={{ width: (y.expense ? v / y.expense : 0) * 100 + '%', background: color }} /></div>
+                <div className="cb-limit">Oyiga o'rtacha {money(v / activeMonths)}{db.settings.limits[c] ? ` · oylik limit ${money(db.settings.limits[c])}` : ''}</div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {inc.length > 0 && (
+        <section className="card report-card">
+          <div className="card-head"><h2>Kirimlar</h2><span className="card-meta">{money(y.income)} so'm</span></div>
+          <ul className="inc-list">
+            {inc.map(([c, v]) => (
+              <li key={c}><span>{c}</span><b>{money(v)}</b></li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   );
 }

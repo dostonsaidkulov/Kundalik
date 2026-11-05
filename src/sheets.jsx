@@ -3,7 +3,7 @@ import { useData } from './data.jsx';
 import { useApp } from './appctx.js';
 import { Sheet, Field, Segmented, Chips, DeleteButton, MoneyInput, TagInput, Stars, Icon } from './ui.jsx';
 import { today, addDays, PRIORITY, TASK_STATUS, IDEA_STATUS, BOOK_STATUS, REMIND, catColor, money, monthKey, newId } from './util.js';
-import { limitState } from './finance-logic.js';
+import { limitState, parseShopList } from './finance-logic.js';
 import { askPermission, notifyNow, NATIVE } from './notify.js';
 import { DebtSheet } from './debts.jsx';
 
@@ -275,6 +275,34 @@ export function ShopSheet({ id }) {
   );
 }
 
+export function ShopListSheet() {
+  const db = useData();
+  const app = useApp();
+  const [text, setText] = useState('');
+  const items = parseShopList(text);
+  const save = () => {
+    if (!items.length) return;
+    items.forEach((it, i) => db.add('shop', { ...it, price: 0, bought: false, pos: i }));
+    app.closeSheet();
+    app.toast(`${items.length} ta mahsulot qo'shildi`);
+  };
+  return (
+    <Sheet title="Ro'yxatni tashlash" onClose={app.closeSheet} footer={<Foot onSave={save} disabled={!items.length} label={items.length ? `Qo'shish (${items.length})` : "Qo'shish"} />}>
+      <p className="muted small">Ro'yxatni Telegram yoki eslatmalardan nusxalab shu yerga qo'ying. Har bir qator alohida mahsulot bo'ladi, raqamlar va belgilar o'zi tozalanadi.</p>
+      <Field htmlFor="sl-text">
+        <textarea id="sl-text" rows={7} value={text} onChange={(e) => setText(e.target.value)} placeholder={'Non 2 ta\nSut 1 l\nTuxum 10 ta\nKartoshka 3 kg'} />
+      </Field>
+      {items.length > 0 && (
+        <ol className="sl-preview">
+          {items.map((it, i) => (
+            <li key={i}><span>{it.name}</span>{it.qty && <em>{it.qty}</em>}</li>
+          ))}
+        </ol>
+      )}
+    </Sheet>
+  );
+}
+
 export function SpendSheet() {
   const db = useData();
   const app = useApp();
@@ -473,4 +501,4 @@ export function QuickAdd() {
   );
 }
 
-export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, quick: QuickAdd };
+export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, shoplist: ShopListSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, quick: QuickAdd };

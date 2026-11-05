@@ -53,7 +53,7 @@ export function DataProvider({ user, backend, children }) {
       ideas: L('ideas').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       plans: L('plans').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       tx: L('tx').sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0)),
-      shop: L('shop').sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)),
+      shop: L('shop').sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0) || (a.pos || 0) - (b.pos || 0)),
       books: L('books').sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)),
       quotes: L('quotes').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       debts: L('debts').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
