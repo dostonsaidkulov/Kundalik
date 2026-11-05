@@ -10,7 +10,7 @@ export async function getBackend() {
 }
 
 const AUTH_ERRORS = {
-  'auth/invalid-credential': "Email yoki parol noto'g'ri.",
+  'auth/invalid-credential': "Email yoki parol noto'g'ri. Bu ilovada hali hisobingiz bo'lmasa, yuqoridagi «Hisob ochish» ni tanlang.",
   'auth/wrong-password': "Parol noto'g'ri.",
   'auth/user-not-found': 'Bu email bilan hisob topilmadi.',
   'auth/invalid-email': "Email manzili noto'g'ri yozilgan.",
