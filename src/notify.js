@@ -47,7 +47,7 @@ export function taskReminderTime(t) {
   return base;
 }
 
-export async function syncReminders({ tasks, plans, books, settings }) {
+export async function syncReminders({ tasks, plans, books, debts = [], settings }) {
   if (!NATIVE) return;
   const L = await ln();
   const perm = await L.checkPermissions();
@@ -77,6 +77,18 @@ export async function syncReminders({ tasks, plans, books, settings }) {
       list.push({ id: nid('pb' + p.id), title: 'Reja muddati ertaga', body: p.title, schedule: { at: new Date(dayBefore), allowWhileIdle: true }, extra: { go: 'thoughts' } });
     if (onDay > now && onDay < horizon)
       list.push({ id: nid('pd' + p.id), title: 'Reja muddati bugun', body: p.title, schedule: { at: new Date(onDay), allowWhileIdle: true }, extra: { go: 'thoughts' } });
+  }
+  for (const d of debts) {
+    const left = (d.amount || 0) - (d.payments || []).reduce((a, p) => a + (p.amount || 0), 0);
+    if (!d.due || d.remind === false || d.closed || left <= 0) continue;
+    const sum = String(Math.round(left)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const body = d.dir === 'lent' ? `${d.person} sizga ${sum} so'm qaytarishi kerak` : `${d.person}ga ${sum} so'm qaytarishingiz kerak`;
+    const dayBefore = at(addDays(d.due, -1), '09:00');
+    const onDay = at(d.due, '09:00');
+    if (dayBefore > now && dayBefore < horizon)
+      list.push({ id: nid('db' + d.id), title: 'Qarz muddati ertaga', body, schedule: { at: new Date(dayBefore), allowWhileIdle: true }, extra: { go: 'money' } });
+    if (onDay > now && onDay < horizon)
+      list.push({ id: nid('dd' + d.id), title: 'Qarz muddati bugun', body, schedule: { at: new Date(onDay), allowWhileIdle: true }, extra: { go: 'money' } });
   }
   list.sort((a, b) => a.schedule.at - b.schedule.at);
   const out = list.slice(0, 60);

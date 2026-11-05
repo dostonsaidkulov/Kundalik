@@ -3,7 +3,7 @@ import { getBackend } from './backend.js';
 import { DEFAULT_SETTINGS, newId } from './util.js';
 import { syncReminders } from './notify.js';
 
-const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'meta'];
+const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'meta'];
 const Ctx = createContext(null);
 
 export function DataProvider({ user, backend, children }) {
@@ -56,6 +56,7 @@ export function DataProvider({ user, backend, children }) {
       shop: L('shop').sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)),
       books: L('books').sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)),
       quotes: L('quotes').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
+      debts: L('debts').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       ...api,
     };
   }, [state, api, settings, loaded, user, backend]);
@@ -66,9 +67,9 @@ export function DataProvider({ user, backend, children }) {
     if (!loaded) return;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      syncReminders({ tasks: value.tasks, plans: value.plans, books: value.books, settings }).catch((e) => console.warn(e));
+      syncReminders({ tasks: value.tasks, plans: value.plans, books: value.books, debts: value.debts, settings }).catch((e) => console.warn(e));
     }, 1500);
-  }, [loaded, value.tasks, value.plans, value.books, settings]);
+  }, [loaded, value.tasks, value.plans, value.books, value.debts, settings]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

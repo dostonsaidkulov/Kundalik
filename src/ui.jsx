@@ -30,6 +30,7 @@ const P = {
   clock: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 7.5V12l3 2'],
   sparkle: ['M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2L5 10.5l5.2-1.8z', 'M18.5 16l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z'],
   chart: ['M4.5 19.5h15', 'M7 16v-4', 'M11 16V8', 'M15 16v-6', 'M19 16V5.5'],
+  swap: ['M5 8h13', 'M14.5 4.5 18 8l-3.5 3.5', 'M19 16H6', 'M9.5 12.5 6 16l3.5 3.5'],
   list: ['M9 6.5h10.5', 'M9 12h10.5', 'M9 17.5h10.5', 'M5 6.5h.01', 'M5 12h.01', 'M5 17.5h.01'],
 };
 
@@ -79,9 +80,9 @@ export function Field({ label, children, hint, htmlFor }) {
   );
 }
 
-export function Segmented({ options, value, onChange, small }) {
+export function Segmented({ options, value, onChange, small, compact }) {
   return (
-    <div className={'seg' + (small ? ' small' : '')} role="tablist">
+    <div className={'seg' + (small ? ' small' : '') + (compact ? ' compact' : '')} role="tablist">
       {options.map((o) => (
         <button key={o.v} role="tab" aria-selected={value === o.v} className={value === o.v ? 'on' : ''} onClick={() => onChange(o.v)} type="button">
           {o.l}

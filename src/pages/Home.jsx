@@ -4,6 +4,7 @@ import { Icon, Progress, Check } from '../ui.jsx';
 import { greeting, fmtLongDate, today, money, monthKey, monthLabel, fmtDate, hashStr, PRIORITY, planProgress } from '../util.js';
 import { monthTotals, limitAlerts } from '../finance-logic.js';
 import { DEMO } from '../backend.js';
+import { debtTotals } from '../debts.jsx';
 
 export default function Home() {
   const db = useData();
@@ -21,6 +22,7 @@ export default function Home() {
   const qBook = quote && db.books.find((b) => b.id === quote.bookId);
   const idea = db.ideas.find((i) => i.status !== 'planned') || db.ideas[0];
   const shopLeft = db.shop.filter((s) => !s.bought).length;
+  const debt = debtTotals(db.debts);
   const activePlans = db.plans.filter((p) => !p.deadline || p.deadline >= t).slice(0, 2);
 
   return (
@@ -86,6 +88,14 @@ export default function Home() {
               <span>{a.level === 'over' ? 'limit oshdi' : `limitning ${Math.round(a.ratio * 100)}%`}</span>
             </div>
           ))}
+          {(debt.lent > 0 || debt.borrowed > 0) && (
+            <button className="debt-chip" onClick={(e) => { e.stopPropagation(); app.go('money', 'debts'); }}>
+              <Icon name="swap" size={16} />
+              <span>Qarzlar</span>
+              {debt.lent > 0 && <span className="in">+{money(debt.lent)}</span>}
+              {debt.borrowed > 0 && <span>−{money(debt.borrowed)}</span>}
+            </button>
+          )}
           {shopLeft > 0 && (
             <button className="shop-chip" onClick={(e) => { e.stopPropagation(); app.go('money', 'shop'); }}>
               <Icon name="cart" size={16} /> Bozorlik ro'yxatida {shopLeft} ta mahsulot

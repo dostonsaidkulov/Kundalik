@@ -4,6 +4,7 @@ import { useApp } from '../appctx.js';
 import { Icon, Segmented, Empty, Check } from '../ui.jsx';
 import { today, monthKey, shiftMonth, monthLabel, money, fmtDate, catColor, MONTHS } from '../util.js';
 import { monthTotals, limitState } from '../finance-logic.js';
+import { Debts, isClosed } from '../debts.jsx';
 
 export default function Finance({ sub, setSub }) {
   const app = useApp();
@@ -11,6 +12,7 @@ export default function Finance({ sub, setSub }) {
   const tab = sub || 'tx';
   const [key, setKey] = useState(monthKey(today()));
   const shopLeft = db.shop.filter((s) => !s.bought).length;
+  const debtOpen = db.debts.filter((d) => !isClosed(d)).length;
   return (
     <div className="page">
       <header className="top">
@@ -22,8 +24,8 @@ export default function Finance({ sub, setSub }) {
           <button className="icon-btn" onClick={() => app.push('search')} aria-label="Qidirish"><Icon name="search" /></button>
         </div>
       </header>
-      <Segmented options={[{ v: 'tx', l: 'Hisob' }, { v: 'shop', l: 'Bozorlik', n: shopLeft || null }, { v: 'report', l: 'Hisobot' }]} value={tab} onChange={setSub} />
-      {tab !== 'shop' && (
+      <Segmented compact options={[{ v: 'tx', l: 'Hisob' }, { v: 'shop', l: 'Bozorlik', n: shopLeft || null }, { v: 'debts', l: 'Qarzlar', n: debtOpen || null }, { v: 'report', l: 'Hisobot' }]} value={tab} onChange={setSub} />
+      {(tab === 'tx' || tab === 'report') && (
         <div className="month-switch">
           <button className="icon-btn" onClick={() => setKey(shiftMonth(key, -1))} aria-label="Oldingi oy"><Icon name="left" /></button>
           <span>{monthLabel(key)}</span>
@@ -32,6 +34,7 @@ export default function Finance({ sub, setSub }) {
       )}
       {tab === 'tx' && <Ledger mkey={key} />}
       {tab === 'shop' && <Shopping />}
+      {tab === 'debts' && <Debts />}
       {tab === 'report' && <Report mkey={key} />}
     </div>
   );

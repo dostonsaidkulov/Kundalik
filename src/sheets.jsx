@@ -5,6 +5,7 @@ import { Sheet, Field, Segmented, Chips, DeleteButton, MoneyInput, TagInput, Sta
 import { today, addDays, PRIORITY, TASK_STATUS, IDEA_STATUS, BOOK_STATUS, REMIND, catColor, money, monthKey, newId } from './util.js';
 import { limitState } from './finance-logic.js';
 import { askPermission, notifyNow, NATIVE } from './notify.js';
+import { DebtSheet } from './debts.jsx';
 
 const opts = (o) => Object.entries(o).map(([v, l]) => ({ v, l: typeof l === 'string' ? l : l.label }));
 
@@ -446,6 +447,7 @@ const QUICK = [
   { k: 'expense', l: 'Chiqim', icon: 'down', c: 'var(--c-money)' },
   { k: 'income', l: 'Kirim', icon: 'up', c: 'var(--c-money)' },
   { k: 'shop', l: 'Bozorlik', icon: 'cart', c: 'var(--c-money)' },
+  { k: 'debt', l: 'Qarz', icon: 'swap', c: 'var(--c-money)' },
   { k: 'idea', l: "G'oya", icon: 'bulb', c: 'var(--c-thoughts)' },
   { k: 'plan', l: 'Reja', icon: 'target', c: 'var(--c-thoughts)' },
   { k: 'book', l: 'Kitob', icon: 'book', c: 'var(--c-books)' },
@@ -471,4 +473,4 @@ export function QuickAdd() {
   );
 }
 
-export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, quick: QuickAdd };
+export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, quick: QuickAdd };

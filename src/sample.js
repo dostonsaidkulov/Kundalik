@@ -63,6 +63,11 @@ export function sampleData() {
       { id: 'x13', type: 'expense', amount: 1800000, cat: 'Uy', date: prev + '18', note: 'Mebel' },
       { id: 'x14', type: 'expense', amount: 700000, cat: 'Kommunal', date: prev + '20', note: '' },
     ]),
+    debts: obj([
+      { id: 'd1', dir: 'lent', person: 'Jasur', amount: 1500000, date: d(4), due: addDays(t, 3), note: 'Telefon uchun', remind: true, payments: [{ id: 'p1', amount: 500000, date: d(1) }], closed: false },
+      { id: 'd2', dir: 'borrowed', person: 'Akam', amount: 2000000, date: d(2), due: addDays(t, 20), note: '', remind: true, payments: [], closed: false },
+      { id: 'd3', dir: 'lent', person: 'Dilshod', amount: 300000, date: d(4), payments: [{ id: 'p2', amount: 300000, date: d(0) }], closed: true },
+    ]),
     shop: obj([
       { id: 'b1', name: 'Non', qty: '2 ta', price: 8000, bought: true },
       { id: 'b2', name: 'Sut', qty: '1 l', price: 14000, bought: true },
