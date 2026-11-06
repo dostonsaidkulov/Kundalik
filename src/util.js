@@ -140,3 +140,28 @@ export function stepDone(step, tasks) {
   }
   return !!step.done;
 }
+
+// 50/30/20 qoidasi: har bir chiqim uchta turdan biriga kiradi
+export const NATURE = {
+  need: { l: 'Zarur', d: 'Usiz yashab bo\'lmaydi: uy, oziq-ovqat, kommunal, ishga yo\'l, dori', target: 50, c: 'var(--c-tasks)' },
+  want: { l: 'Xohish', d: 'Usiz ham bo\'ladi: kafe, kiyim-kechak, ko\'ngilochar, sovg\'alar', target: 30, c: 'var(--c-books)' },
+  future: { l: 'Kelajak', d: 'Jamg\'arma, qarzni qaytarish, o\'zingizga sarmoya', target: 20, c: 'var(--c-money)' },
+};
+const DEFAULT_NATURE = {
+  'Oziq-ovqat': 'need', Transport: 'need', Kommunal: 'need', Uy: 'need', "Sog'liq": 'need', Komissiya: 'need',
+  Kiyim: 'want', 'Dam olish': 'want', Boshqa: 'want', "Ta'lim": 'future',
+};
+export function natureOf(t, settings) {
+  return t.nature || settings?.catNature?.[t.cat] || DEFAULT_NATURE[t.cat] || 'want';
+}
+export function natureTotals(list, settings) {
+  const r = { need: 0, want: 0, future: 0, income: 0, expense: 0 };
+  for (const t of list) {
+    if (t.type === 'income') r.income += t.amount || 0;
+    else if (t.type === 'expense') {
+      r.expense += t.amount || 0;
+      r[natureOf(t, settings)] += t.amount || 0;
+    }
+  }
+  return r;
+}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useData } from './data.jsx';
 import { useApp } from './appctx.js';
 import { Sheet, Field, Segmented, DeleteButton, MoneyInput, Icon, Empty } from './ui.jsx';
-import { today, money, fmtDate, catColor } from './util.js';
+import { today, money, fmtDate, catColor, NATURE, natureOf } from './util.js';
 
 export const ACC_TYPES = {
   cash: { l: 'Naqd pul', icon: 'cash', c: 'var(--c-money)' },
@@ -122,7 +122,10 @@ export function TxRow({ t, accountView }) {
       </span>
       <div className="tr-main">
         <div className="tr-title">{t.cat}</div>
-        <div className="tr-sub">{accountView ? '' : accName(accOf(t))}{!accountView && t.note ? ' · ' : ''}{t.note}</div>
+        <div className="tr-sub">
+          {t.type === 'expense' && (() => { const n = natureOf(t, db.settings); return <span className="nat-tag" style={{ '--nc': NATURE[n].c }}>{NATURE[n].l}</span>; })()}
+          {[accountView ? '' : accName(accOf(t)), t.note].filter(Boolean).join(' · ')}
+        </div>
       </div>
       <span className={'tx-amt ' + (t.type === 'income' ? 'in' : 'out')}>{t.type === 'income' ? '+' : '−'}{money(t.amount)}</span>
     </li>

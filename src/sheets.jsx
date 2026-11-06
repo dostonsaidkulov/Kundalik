@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useData } from './data.jsx';
 import { useApp } from './appctx.js';
 import { Sheet, Field, Segmented, Chips, DeleteButton, MoneyInput, TagInput, Stars, Icon } from './ui.jsx';
-import { today, addDays, PRIORITY, TASK_STATUS, IDEA_STATUS, BOOK_STATUS, REMIND, catColor, money, monthKey, newId } from './util.js';
+import { today, addDays, PRIORITY, TASK_STATUS, IDEA_STATUS, BOOK_STATUS, REMIND, catColor, money, monthKey, newId, NATURE, natureOf } from './util.js';
 import { limitState, parseShopList } from './finance-logic.js';
 import { askPermission, notifyNow, NATIVE } from './notify.js';
 import { DebtSheet } from './debts.jsx';
@@ -195,6 +195,50 @@ export function PlanSheet({ id }) {
 }
 
 /* ---------------- Kirim / chiqim ---------------- */
+export function NaturePick({ value, onChange }) {
+  return (
+    <div className="nature-pick" role="radiogroup" aria-label="Chiqim turi">
+      {Object.entries(NATURE).map(([k, n]) => (
+        <button key={k} type="button" role="radio" aria-checked={value === k} className={value === k ? 'on' : ''} style={{ '--nc': n.c }} onClick={() => onChange(k)}>
+          <b>{n.l}</b>
+          <span>{n.target}%</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Kategoriya tanlash + shu yerning o'zida yangi kategoriya qo'shish */
+function CatChips({ type, cats, value, onChange }) {
+  const db = useData();
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState('');
+  const key = type === 'income' ? 'incomeCats' : 'expenseCats';
+  const add = () => {
+    const v = name.trim();
+    if (!v) return setAdding(false);
+    if (!cats.includes(v)) db.saveSettings({ [key]: [...cats, v] });
+    onChange(v);
+    setName('');
+    setAdding(false);
+  };
+  return (
+    <div className="chips">
+      {cats.map((c) => (
+        <button type="button" key={c} className={'chip' + (value === c ? ' on' : '')} style={value === c ? { '--chip': catColor(c, cats) } : undefined} onClick={() => onChange(c)}>{c}</button>
+      ))}
+      {adding ? (
+        <span className="chip-add">
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } if (e.key === 'Escape') { e.stopPropagation(); setAdding(false); } }} placeholder="Yangi kategoriya" aria-label="Yangi kategoriya nomi" />
+          <button type="button" onClick={add} aria-label="Qo'shish"><Icon name="check" size={16} stroke={2.4} /></button>
+        </span>
+      ) : (
+        <button type="button" className="chip ghost" onClick={() => setAdding(true)}><Icon name="plus" size={14} stroke={2.2} /> Yangi</button>
+      )}
+    </div>
+  );
+}
+
 export function TxSheet({ id, preset = {} }) {
   const db = useData();
   const app = useApp();
@@ -204,6 +248,7 @@ export function TxSheet({ id, preset = {} }) {
   const isTr = f.type === 'transfer';
   const cats = f.type === 'income' ? db.settings.incomeCats : db.settings.expenseCats;
   const cat = cats.includes(f.cat) ? f.cat : f.cat || cats[0];
+  const nature = f.natureSet ? f.nature : natureOf({ cat, nature: old && old.cat === cat ? old.nature : '' }, db.settings);
   const liveAcc = db.accounts.filter((a) => !a.archived);
   const toAcc = f.to && f.to !== f.from ? f.to : liveAcc.find((a) => a.id !== f.from)?.id || '';
   const accOk = isTr ? f.from && toAcc && f.from !== toAcc : !!f.acc;
@@ -213,13 +258,17 @@ export function TxSheet({ id, preset = {} }) {
       const d = { type: 'transfer', amount: f.amount, from: f.from, to: toAcc, date: f.date || today(), note: f.note || '' };
       if (old) db.update('tx', id, d);
       else db.add('tx', d);
-      if (!old && f.fee > 0) db.add('tx', { type: 'expense', amount: f.fee, cat: 'Komissiya', acc: f.from, date: d.date, note: "O'tkazma komissiyasi" });
+      if (!old && f.fee > 0) db.add('tx', { type: 'expense', amount: f.fee, cat: 'Komissiya', nature: 'need', acc: f.from, date: d.date, note: "O'tkazma komissiyasi" });
       rememberAcc(f.from);
       app.closeSheet();
       app.toast(old ? 'Saqlandi' : "O'tkazma yozildi");
       return;
     }
     const d = { type: f.type, amount: f.amount, cat, acc: f.acc, date: f.date || today(), note: f.note || '' };
+    if (d.type === 'expense') {
+      d.nature = nature;
+      if (db.settings.catNature?.[cat] !== nature) db.saveSettings({ catNature: { ...(db.settings.catNature || {}), [cat]: nature } });
+    }
     if (old) db.update('tx', id, d);
     else db.add('tx', d);
     rememberAcc(f.acc);
@@ -268,8 +317,13 @@ export function TxSheet({ id, preset = {} }) {
       ) : (
         <>
           <Field label="Kategoriya">
-            <Chips options={cats} value={cat} onChange={set('cat')} color={(c) => catColor(c, cats)} />
+            <CatChips type={f.type} cats={cats} value={cat} onChange={(v) => setF((s) => ({ ...s, cat: v, natureSet: false }))} />
           </Field>
+          {f.type === 'expense' && (
+            <Field label="Bu chiqim qanday?" hint={NATURE[nature].d}>
+              <NaturePick value={nature} onChange={(v) => setF((s) => ({ ...s, nature: v, natureSet: true }))} />
+            </Field>
+          )}
           <Field label={f.type === 'income' ? 'Qaysi hisobga' : 'Qaysi hisobdan'}>
             <AccPicker value={f.acc} onChange={set('acc')} label="Hisob" />
           </Field>
@@ -355,7 +409,7 @@ export function SpendSheet() {
   const [f, set] = useForm({ amount: sum, cat: cats.includes('Oziq-ovqat') ? 'Oziq-ovqat' : cats[0], date: today(), note: items.map((s) => s.name).join(', '), acc: lastAcc(db.accounts) });
   const save = () => {
     if (!f.amount) return;
-    const d = { type: 'expense', amount: f.amount, cat: f.cat, acc: f.acc, date: f.date, note: f.note ? 'Bozorlik: ' + f.note : 'Bozorlik' };
+    const d = { type: 'expense', amount: f.amount, cat: f.cat, nature: natureOf({ cat: f.cat }, db.settings), acc: f.acc, date: f.date, note: f.note ? 'Bozorlik: ' + f.note : 'Bozorlik' };
     rememberAcc(f.acc);
     db.add('tx', d);
     items.forEach((s) => db.remove('shop', s.id));
@@ -377,7 +431,7 @@ export function SpendSheet() {
         <MoneyInput id="sp-amount" value={f.amount} onChange={set('amount')} autoFocus={!sum} />
       </Field>
       <Field label="Kategoriya">
-        <Chips options={cats} value={f.cat} onChange={set('cat')} color={(c) => catColor(c, cats)} />
+        <CatChips type="expense" cats={cats} value={f.cat} onChange={set('cat')} />
       </Field>
       <Field label="Qaysi hisobdan">
         <AccPicker value={f.acc} onChange={set('acc')} label="Hisob" />

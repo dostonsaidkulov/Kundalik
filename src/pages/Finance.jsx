@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useData } from '../data.jsx';
 import { useApp } from '../appctx.js';
 import { Icon, Segmented, Empty, Check } from '../ui.jsx';
-import { today, monthKey, shiftMonth, monthLabel, money, fmtDate, catColor, MONTHS } from '../util.js';
+import { today, monthKey, shiftMonth, monthLabel, money, fmtDate, catColor, MONTHS, NATURE, natureTotals } from '../util.js';
 import { monthTotals, limitState, yearTotals, parseShopList } from '../finance-logic.js';
 import { Debts, isClosed } from '../debts.jsx';
 import { AccountsBlock, TxRow, yearCashflow } from '../accounts.jsx';
@@ -209,6 +209,7 @@ function Report({ mkey }) {
 
   return (
     <>
+      <NatureCard list={db.tx.filter((t) => t.date && monthKey(t.date) === mkey)} title="50/30/20 qoidasi" />
       <section className="card report-card">
         <div className="card-head"><h2>Chiqimlar</h2><span className="card-meta">{money(m.expense)} so'm</span></div>
         {rows.length === 0 && limitOnly.length === 0 && <div className="calm">Bu oyda chiqim yozilmagan.</div>}
@@ -300,6 +301,7 @@ function YearReport({ year, onMonth }) {
         </div>
       </section>
 
+      <NatureCard list={db.tx.filter((t) => t.date && t.date.slice(0, 4) === String(year))} title="50/30/20 qoidasi" />
       <Cashflow year={year} onMonth={onMonth} />
 
       <section className="card report-card">
@@ -416,6 +418,56 @@ function Cashflow({ year, onMonth }) {
         {showInv && " «Invest.» ustunida investitsiya hisobiga o'tkazilgan pul ko'rsatilgan."}
         {showAdj && ` Qoldiq to'g'rilashlari va investitsiya qiymati o'zgarishi: ${full(cf.adjust)} so'm.`}
       </p>
+    </section>
+  );
+}
+
+/** 50/30/20: daromadning qancha qismi zarur, xohish va kelajakka ketdi */
+function NatureCard({ list, title }) {
+  const db = useData();
+  const n = natureTotals(list, db.settings);
+  if (!n.expense && !n.income) return null;
+  const base = n.income || n.expense;
+  // Kelajak = kelajak uchun chiqimlar + sarflanmay qolgan daromad (jamg'arma)
+  const saved = n.income ? Math.max(0, n.income - n.expense) : 0;
+  const parts = [
+    { k: 'need', v: n.need },
+    { k: 'want', v: n.want },
+    { k: 'future', v: n.future + saved },
+  ];
+  const pct = (v) => (base ? Math.round((v / base) * 100) : 0);
+  const verdict = (k, p) => {
+    const t = NATURE[k].target;
+    if (k === 'future') return p >= t ? 'ok' : p >= t / 2 ? 'warn' : 'over';
+    return p <= t ? 'ok' : p <= t + 10 ? 'warn' : 'over';
+  };
+  return (
+    <section className="card report-card nature-card">
+      <div className="card-head"><h2>{title}</h2><span className="card-meta">{n.income ? 'daromadga nisbatan' : 'chiqimlarga nisbatan'}</span></div>
+      <div className="nat-bar" role="img" aria-label={parts.map((p) => `${NATURE[p.k].l} ${pct(p.v)}%`).join(', ')}>
+        {parts.map((p) => p.v > 0 && <div key={p.k} style={{ flex: p.v, background: NATURE[p.k].c }} />)}
+      </div>
+      <ul className="nat-list">
+        {parts.map((p) => {
+          const pc = pct(p.v);
+          const vd = n.income ? verdict(p.k, pc) : '';
+          return (
+            <li key={p.k}>
+              <span className="dot" style={{ background: NATURE[p.k].c }} />
+              <div className="nl-main">
+                <div className="nl-row"><b>{NATURE[p.k].l}</b><span className="nl-val">{money(p.v)}</span></div>
+                <div className="nl-sub">
+                  {p.k === 'future' && saved > 0 ? `shundan ${money(saved)} sarflanmay qoldi · ` : ''}
+                  tavsiya {p.k === 'future' ? 'kamida' : "ko'pi bilan"} {NATURE[p.k].target}%
+                </div>
+              </div>
+              <span className={'nl-pct ' + vd}>{pc}%</span>
+            </li>
+          );
+        })}
+      </ul>
+      {n.income > 0 && n.expense > n.income && <div className="alert over">Chiqim daromaddan {money(n.expense - n.income)} so'mga oshib ketgan.</div>}
+      <p className="muted small">Har bir chiqimni kiritayotganda turini o'zingiz belgilaysiz. Kelajak ulushiga «Kelajak» deb belgilangan chiqimlar va sarflanmay qolgan daromad kiradi.</p>
     </section>
   );
 }

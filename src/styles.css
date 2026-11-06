@@ -700,3 +700,28 @@ textarea { resize: vertical; min-height: 44px; line-height: 1.45; }
 .groups-line { margin-top: 12px; }
 .quick { grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .quick button { font-size: 12.5px; padding: 11px 0; }
+
+/* ---------- 50/30/20 ---------- */
+.nature-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.nature-pick button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 9px 4px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); }
+.nature-pick button b { font-size: 15px; font-weight: 650; }
+.nature-pick button span { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.nature-pick button.on { border-color: var(--nc); background: color-mix(in srgb, var(--nc) 12%, var(--surface)); box-shadow: inset 0 0 0 1px var(--nc); }
+.nature-pick button.on b { color: var(--nc); }
+.chip.ghost { border-style: dashed; display: inline-flex; align-items: center; gap: 4px; }
+.chip-add { display: inline-flex; align-items: center; border: 1.5px solid var(--ink-3); border-radius: 20px; background: var(--surface); padding: 0 4px 0 12px; }
+.chip-add input { border: 0; outline: none; background: none; font-size: 14px; padding: 6px 0; width: 140px; color: var(--ink); }
+.chip-add button { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--ok); }
+.nat-tag { display: inline-block; font-size: 11px; font-weight: 650; color: var(--nc); background: color-mix(in srgb, var(--nc) 12%, transparent); padding: 0 6px; border-radius: 8px; margin-right: 6px; vertical-align: 1px; }
+.nat-bar { display: flex; height: 14px; border-radius: 8px; overflow: hidden; gap: 2px; background: var(--surface-2); }
+.nat-bar > div { min-width: 4px; }
+.nat-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.nat-list li { display: flex; align-items: center; gap: 10px; }
+.nl-main { flex: 1; min-width: 0; }
+.nl-row { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+.nl-val { font-variant-numeric: tabular-nums; font-weight: 620; }
+.nl-sub { font-size: 12.5px; color: var(--ink-2); }
+.nl-pct { width: 52px; text-align: right; font-size: 18px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.nl-pct.ok { color: var(--ok); }
+.nl-pct.warn { color: var(--warn); }
+.nl-pct.over { color: var(--danger); }
