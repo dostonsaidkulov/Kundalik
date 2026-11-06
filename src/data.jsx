@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { getBackend } from './backend.js';
 import { DEFAULT_SETTINGS, newId } from './util.js';
 import { syncReminders } from './notify.js';
+import { DEFAULT_ACCOUNTS } from './accounts.jsx';
 
-const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'meta'];
+const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'accounts', 'meta'];
 const Ctx = createContext(null);
 
 export function DataProvider({ user, backend, children }) {
@@ -57,9 +58,17 @@ export function DataProvider({ user, backend, children }) {
       books: L('books').sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)),
       quotes: L('quotes').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       debts: L('debts').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
+      accounts: L('accounts').sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || (a.createdAt || 0) - (b.createdAt || 0)),
       ...api,
     };
   }, [state, api, settings, loaded, user, backend]);
+
+  // Birinchi marta: Naqd pul, Plastik karta, Investitsiya hisoblarini yaratamiz (doimiy id bilan, ikki qurilmada takrorlanmaydi)
+  useEffect(() => {
+    if (!loaded || settings.accountsInit || (state.accounts || []).length) return;
+    DEFAULT_ACCOUNTS.forEach(({ id, ...a }) => backend.put(user.uid, 'accounts', id, { ...a, createdAt: Date.now() }));
+    backend.put(user.uid, 'meta', 'settings', { accountsInit: true });
+  }, [loaded, settings.accountsInit, state.accounts, backend, user.uid]);
 
   // Eslatmalarni ma'lumot o'zgargandan keyin qayta rejalashtiramiz.
   const timer = useRef();

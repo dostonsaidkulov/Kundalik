@@ -19,8 +19,8 @@ export function Search() {
     { l: "G'oyalar", icon: 'bulb', items: db.ideas.filter((i) => has(i.title, i.text, i.tags || [])).map((i) => ({ id: i.id, t: i.title, sub: i.text, go: () => app.openSheet('idea', { id: i.id }) })) },
     { l: 'Kitoblar', icon: 'book', items: db.books.filter((b) => has(b.title, b.author, b.summary)).map((b) => ({ id: b.id, t: b.title, sub: b.author, go: () => app.push('book', { id: b.id }) })) },
     { l: 'Iqtiboslar', icon: 'quote', items: db.quotes.filter((x) => has(x.text, x.note)).map((x) => ({ id: x.id, t: x.text, sub: db.books.find((b) => b.id === x.bookId)?.title, go: () => app.openSheet('quote', { id: x.id }) })) },
-    { l: 'Moliya', icon: 'wallet', items: db.tx.filter((x) => has(x.note, x.cat)).slice(0, 30).map((x) => ({ id: x.id, t: `${x.type === 'income' ? '+' : '−'}${money(x.amount)} so'm · ${x.cat}`, sub: `${fmtDate(x.date)}${x.note ? ' · ' + x.note : ''}`, go: () => app.openSheet('tx', { id: x.id }) })) },
-    { l: 'Qarzlar', icon: 'swap', items: db.debts.filter((x) => has(x.person, x.note)).map((x) => ({ id: x.id, t: `${x.person} · ${money(x.amount)} so'm`, sub: x.dir === 'lent' ? 'Men berdim' : 'Men oldim', go: () => app.openSheet('debt', { id: x.id }) })) },
+    { l: 'Moliya', icon: 'wallet', items: db.tx.filter((x) => (x.type === 'income' || x.type === 'expense') && has(x.note, x.cat)).slice(0, 30).map((x) => ({ id: x.id, t: `${x.type === 'income' ? '+' : '−'}${money(x.amount)} so'm · ${x.cat}`, sub: `${fmtDate(x.date)}${x.note ? ' · ' + x.note : ''}`, go: () => app.openSheet('tx', { id: x.id }) })) },
+    { l: 'Qarzlar', icon: 'coins', items: db.debts.filter((x) => has(x.person, x.note)).map((x) => ({ id: x.id, t: `${x.person} · ${money(x.amount)} so'm`, sub: x.dir === 'lent' ? 'Men berdim' : 'Men oldim', go: () => app.openSheet('debt', { id: x.id }) })) },
     { l: 'Bozorlik', icon: 'cart', items: db.shop.filter((x) => has(x.name)).map((x) => ({ id: x.id, t: x.name, sub: x.bought ? 'Olingan' : x.qty, go: () => app.openSheet('shop', { id: x.id }) })) },
   ].filter((g) => g.items.length);
   return (

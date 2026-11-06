@@ -12,6 +12,7 @@ import Finance from './pages/Finance.jsx';
 import Books, { BookDetail } from './pages/Books.jsx';
 import Thoughts, { PlanDetail } from './pages/Thoughts.jsx';
 import { Search, Settings, Login } from './pages/Other.jsx';
+import { AccountDetail } from './accounts.jsx';
 
 const TABS = [
   { k: 'home', l: 'Bosh sahifa', short: 'Bosh', icon: 'home' },
@@ -20,7 +21,7 @@ const TABS = [
   { k: 'books', l: 'Kitoblar', short: 'Kitoblar', icon: 'book' },
   { k: 'thoughts', l: 'Fikrlar', short: 'Fikrlar', icon: 'bulb' },
 ];
-const VIEWS = { book: BookDetail, plan: PlanDetail, search: Search, settings: Settings };
+const VIEWS = { book: BookDetail, plan: PlanDetail, search: Search, settings: Settings, account: AccountDetail };
 
 export default function App() {
   const [backend, setBackend] = useState(null);
@@ -122,6 +123,7 @@ function Shell() {
   const S = sheet && SHEETS[sheet.type];
   const fabAction = () => {
     if (top?.view === 'book') return api.openSheet('quote', { preset: { bookId: top.props.id } });
+    if (top?.view === 'account') return api.openSheet('tx', { preset: { type: 'expense', acc: top.props.id } });
     if (top?.view === 'plan') return api.openSheet('task', { preset: { planId: top.props.id, due: '' } });
     if (tab === 'tasks') return api.openSheet('task');
     if (tab === 'money') return subs.money === 'shop' ? api.openSheet('shop') : subs.money === 'debts' ? api.openSheet('debt') : api.openSheet('tx', { preset: { type: 'expense' } });

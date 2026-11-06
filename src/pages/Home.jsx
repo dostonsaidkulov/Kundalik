@@ -5,6 +5,7 @@ import { greeting, fmtLongDate, today, money, monthKey, monthLabel, fmtDate, has
 import { monthTotals, limitAlerts } from '../finance-logic.js';
 import { DEMO } from '../backend.js';
 import { debtTotals } from '../debts.jsx';
+import { totalBalance } from '../accounts.jsx';
 
 export default function Home() {
   const db = useData();
@@ -23,6 +24,7 @@ export default function Home() {
   const idea = db.ideas.find((i) => i.status !== 'planned') || db.ideas[0];
   const shopLeft = db.shop.filter((s) => !s.bought).length;
   const debt = debtTotals(db.debts);
+  const total = totalBalance(db.accounts.filter((a) => !a.archived), db.tx);
   const activePlans = db.plans.filter((p) => !p.deadline || p.deadline >= t).slice(0, 2);
 
   return (
@@ -75,8 +77,8 @@ export default function Home() {
             <h2>{monthLabel(key)}</h2>
           </div>
           <div className="balance">
-            <span className="b-label">Qoldiq</span>
-            <span className={'b-num' + (m.balance < 0 ? ' neg' : '')}>{money(m.balance)}<small> so'm</small></span>
+            <span className="b-label">Jami mablag'</span>
+            <span className={'b-num' + (total < 0 ? ' neg' : '')}>{money(total)}<small> so'm</small></span>
           </div>
           <div className="io">
             <div><span className="io-l"><Icon name="up" size={14} /> Kirim</span><b>{money(m.income)}</b></div>
@@ -90,7 +92,7 @@ export default function Home() {
           ))}
           {(debt.lent > 0 || debt.borrowed > 0) && (
             <button className="debt-chip" onClick={(e) => { e.stopPropagation(); app.go('money', 'debts'); }}>
-              <Icon name="swap" size={16} />
+              <Icon name="coins" size={16} />
               <span>Qarzlar</span>
               {debt.lent > 0 && <span className="in">+{money(debt.lent)}</span>}
               {debt.borrowed > 0 && <span>−{money(debt.borrowed)}</span>}

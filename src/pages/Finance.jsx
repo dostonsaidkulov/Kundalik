@@ -5,6 +5,7 @@ import { Icon, Segmented, Empty, Check } from '../ui.jsx';
 import { today, monthKey, shiftMonth, monthLabel, money, fmtDate, catColor, MONTHS } from '../util.js';
 import { monthTotals, limitState, yearTotals, parseShopList } from '../finance-logic.js';
 import { Debts, isClosed } from '../debts.jsx';
+import { AccountsBlock, TxRow, yearCashflow } from '../accounts.jsx';
 
 export default function Finance({ sub, setSub }) {
   const app = useApp();
@@ -27,7 +28,7 @@ export default function Finance({ sub, setSub }) {
           <button className="icon-btn" onClick={() => app.push('search')} aria-label="Qidirish"><Icon name="search" /></button>
         </div>
       </header>
-      <Segmented compact options={[{ v: 'tx', l: 'Hisob' }, { v: 'shop', l: 'Bozorlik', n: shopLeft || null }, { v: 'debts', l: 'Qarzlar', n: debtOpen || null }, { v: 'report', l: 'Hisobot' }]} value={tab} onChange={setSub} />
+      <Segmented compact options={[{ v: 'tx', l: 'Hisoblar' }, { v: 'shop', l: 'Bozorlik', n: shopLeft || null }, { v: 'debts', l: 'Qarzlar', n: debtOpen || null }, { v: 'report', l: 'Hisobot' }]} value={tab} onChange={setSub} />
       {tab === 'report' && (
         <Segmented small options={[{ v: 'month', l: 'Oylik' }, { v: 'year', l: 'Yillik' }]} value={period} onChange={setPeriod} />
       )}
@@ -38,6 +39,7 @@ export default function Finance({ sub, setSub }) {
           <button className="icon-btn" onClick={() => setYear(year + 1)} disabled={year >= thisYear} aria-label="Keyingi yil"><Icon name="right" /></button>
         </div>
       )}
+      {tab === 'tx' && <AccountsBlock />}
       {(tab === 'tx' || (tab === 'report' && period === 'month')) && (
         <div className="month-switch">
           <button className="icon-btn" onClick={() => setKey(shiftMonth(key, -1))} aria-label="Oldingi oy"><Icon name="left" /></button>
@@ -65,12 +67,11 @@ function Ledger({ mkey }) {
     if (last && last.date === t.date) last.items.push(t);
     else days.push({ date: t.date, items: [t] });
   }
-  const cats = (t) => (t.type === 'income' ? db.settings.incomeCats : db.settings.expenseCats);
   return (
     <>
       <div className="summary">
         <div className="sum-main">
-          <span>Oy qoldig'i</span>
+          <span>Oy natijasi (kirim − chiqim)</span>
           <b className={m.balance < 0 ? 'neg' : ''}>{money(m.balance)} <small>so'm</small></b>
         </div>
         <div className="sum-io">
@@ -88,23 +89,12 @@ function Ledger({ mkey }) {
         <Empty icon="wallet" title="Bu oyda yozuv yo'q" text="Har bir kirim va chiqimni yozib borsangiz, oy oxirida pulingiz qayerga ketganini ko'rasiz." />
       ) : (
         days.map((d) => {
-          const dayOut = d.items.filter((t) => t.type !== 'income').reduce((a, t) => a + t.amount, 0);
+          const dayOut = d.items.filter((t) => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
           return (
             <section key={d.date} className="group">
               <h3 className="group-t">{fmtDate(d.date)}{dayOut > 0 && <span className="day-sum">−{money(dayOut)}</span>}</h3>
               <ul className="list">
-                {d.items.map((t) => (
-                  <li key={t.id} className="tx-row" onClick={() => app.openSheet('tx', { id: t.id })}>
-                    <span className="tx-ic" style={{ '--cc': catColor(t.cat, cats(t)) }}>
-                      <Icon name={t.type === 'income' ? 'up' : 'down'} size={16} />
-                    </span>
-                    <div className="tr-main">
-                      <div className="tr-title">{t.cat}</div>
-                      {t.note && <div className="tr-sub">{t.note}</div>}
-                    </div>
-                    <span className={'tx-amt ' + (t.type === 'income' ? 'in' : 'out')}>{t.type === 'income' ? '+' : '−'}{money(t.amount)}</span>
-                  </li>
-                ))}
+                {d.items.map((t) => <TxRow key={t.id} t={t} />)}
               </ul>
             </section>
           );
@@ -297,7 +287,7 @@ function YearReport({ year, onMonth }) {
     <>
       <section className="summary">
         <div className="sum-main">
-          <span>{year}-yil qoldig'i</span>
+          <span>{year}-yil natijasi (kirim − chiqim)</span>
           <b className={y.balance < 0 ? 'neg' : ''}>{money(y.balance)} <small>so'm</small></b>
         </div>
         <div className="sum-io static">
@@ -309,6 +299,8 @@ function YearReport({ year, onMonth }) {
           {top && <div><span>Eng ko'p sarflangan oy</span><b>{MONTHS[top.i]}</b></div>}
         </div>
       </section>
+
+      <Cashflow year={year} onMonth={onMonth} />
 
       <section className="card report-card">
         <div className="card-head"><h2>12 oy</h2></div>
@@ -363,5 +355,67 @@ function YearReport({ year, onMonth }) {
         </section>
       )}
     </>
+  );
+}
+
+function Cashflow({ year, onMonth }) {
+  const db = useData();
+  const cf = yearCashflow(db.accounts, db.tx, year);
+  const curKey = monthKey(today());
+  const rows = cf.rows.filter((r) => r.key <= curKey);
+  const showInv = cf.rows.some((r) => r.invest);
+  const showAdj = cf.rows.some((r) => r.adjust);
+  const short = (v) => {
+    const a = Math.abs(v);
+    if (a >= 1e6) return (a / 1e6).toFixed(a >= 1e8 ? 0 : 1).replace('.', ',').replace(',0', '') + ' mln';
+    if (a >= 1e3) return Math.round(a / 1e3) + ' ming';
+    return String(Math.round(a));
+  };
+  const c = (v) => (v < 0 ? '−' : '') + short(v);
+  const sgn = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + short(v);
+  const full = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + money(Math.abs(v));
+  return (
+    <section className="card report-card cashflow">
+      <div className="card-head"><h2>Pul oqimi (cash flow)</h2></div>
+      <div className="cf-ends">
+        <div><span>Yil boshida</span><b>{money(cf.start)}</b></div>
+        <Icon name="arrow" size={18} />
+        <div><span>{rows.length < 12 ? 'Hozir' : 'Yil oxirida'}</span><b>{money(rows.length ? rows[rows.length - 1].end : cf.start)}</b></div>
+      </div>
+      <div className="cf-scroll">
+        <table className="cf-table">
+          <thead>
+            <tr><th>Oy</th><th>Kirim</th><th>Chiqim</th><th>Sof</th>{showInv && <th>Invest.</th>}<th>Qoldiq</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key} onClick={() => onMonth(r.key)} className={r.key === curKey ? 'cur' : ''}>
+                <td>{MONTHS[r.m - 1].slice(0, 3)}</td>
+                <td className="in">{r.income ? short(r.income) : '·'}</td>
+                <td>{r.expense ? short(r.expense) : '·'}</td>
+                <td className={r.net > 0 ? 'in' : r.net < 0 ? 'neg' : ''}>{r.net ? sgn(r.net) : '·'}</td>
+                {showInv && <td>{r.invest ? sgn(r.invest) : '·'}</td>}
+                <td className="bal">{c(r.end)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Jami</td>
+              <td className="in">{short(cf.income)}</td>
+              <td>{short(cf.expense)}</td>
+              <td className={cf.net > 0 ? 'in' : cf.net < 0 ? 'neg' : ''}>{sgn(cf.net)}</td>
+              {showInv && <td>{sgn(cf.invest)}</td>}
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p className="muted small">
+        Sof = kirim − chiqim. Hisoblar orasidagi o'tkazmalar bunga kirmaydi.
+        {showInv && " «Invest.» ustunida investitsiya hisobiga o'tkazilgan pul ko'rsatilgan."}
+        {showAdj && ` Qoldiq to'g'rilashlari va investitsiya qiymati o'zgarishi: ${full(cf.adjust)} so'm.`}
+      </p>
+    </section>
   );
 }

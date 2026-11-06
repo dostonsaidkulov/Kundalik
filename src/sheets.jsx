@@ -6,6 +6,7 @@ import { today, addDays, PRIORITY, TASK_STATUS, IDEA_STATUS, BOOK_STATUS, REMIND
 import { limitState, parseShopList } from './finance-logic.js';
 import { askPermission, notifyNow, NATIVE } from './notify.js';
 import { DebtSheet } from './debts.jsx';
+import { AccPicker, lastAcc, rememberAcc, AccountSheet, AdjustSheet } from './accounts.jsx';
 
 const opts = (o) => Object.entries(o).map(([v, l]) => ({ v, l: typeof l === 'string' ? l : l.label }));
 
@@ -197,14 +198,30 @@ export function TxSheet({ id, preset = {} }) {
   const db = useData();
   const app = useApp();
   const old = id && db.tx.find((t) => t.id === id);
-  const [f, set, setF] = useForm({ type: 'expense', amount: 0, cat: '', date: today(), note: '', ...preset, ...(old || {}) });
+  const defAcc = lastAcc(db.accounts);
+  const [f, set, setF] = useForm({ type: 'expense', amount: 0, cat: '', date: today(), note: '', acc: defAcc, from: defAcc, to: '', fee: 0, ...preset, ...(old || {}) });
+  const isTr = f.type === 'transfer';
   const cats = f.type === 'income' ? db.settings.incomeCats : db.settings.expenseCats;
   const cat = cats.includes(f.cat) ? f.cat : f.cat || cats[0];
+  const liveAcc = db.accounts.filter((a) => !a.archived);
+  const toAcc = f.to && f.to !== f.from ? f.to : liveAcc.find((a) => a.id !== f.from)?.id || '';
+  const accOk = isTr ? f.from && toAcc && f.from !== toAcc : !!f.acc;
   const save = () => {
-    if (!f.amount) return;
-    const d = { type: f.type, amount: f.amount, cat, date: f.date || today(), note: f.note || '' };
+    if (!f.amount || !accOk) return;
+    if (isTr) {
+      const d = { type: 'transfer', amount: f.amount, from: f.from, to: toAcc, date: f.date || today(), note: f.note || '' };
+      if (old) db.update('tx', id, d);
+      else db.add('tx', d);
+      if (!old && f.fee > 0) db.add('tx', { type: 'expense', amount: f.fee, cat: 'Komissiya', acc: f.from, date: d.date, note: "O'tkazma komissiyasi" });
+      rememberAcc(f.from);
+      app.closeSheet();
+      app.toast(old ? 'Saqlandi' : "O'tkazma yozildi");
+      return;
+    }
+    const d = { type: f.type, amount: f.amount, cat, acc: f.acc, date: f.date || today(), note: f.note || '' };
     if (old) db.update('tx', id, d);
     else db.add('tx', d);
+    rememberAcc(f.acc);
     app.closeSheet();
     if (d.type === 'expense') {
       const others = db.tx.filter((t) => t.id !== id);
@@ -222,22 +239,47 @@ export function TxSheet({ id, preset = {} }) {
     }
     app.toast(old ? 'Saqlandi' : d.type === 'income' ? 'Kirim yozildi' : 'Chiqim yozildi');
   };
+  const titles = { expense: ['Chiqim', 'Yangi chiqim'], income: ['Kirim', 'Yangi kirim'], transfer: ["O'tkazma", "Yangi o'tkazma"] };
   return (
-    <Sheet title={old ? (f.type === 'income' ? 'Kirim' : 'Chiqim') : f.type === 'income' ? 'Yangi kirim' : 'Yangi chiqim'} onClose={app.closeSheet}
-      footer={<Foot onSave={save} disabled={!f.amount} left={old && <DeleteButton onDelete={() => { db.remove('tx', id); app.closeSheet(); app.toast("O'chirildi"); }} />} />}>
-      <Segmented options={[{ v: 'expense', l: 'Chiqim' }, { v: 'income', l: 'Kirim' }]} value={f.type} onChange={(v) => setF((s) => ({ ...s, type: v, cat: '' }))} />
+    <Sheet title={titles[f.type][old ? 0 : 1]} onClose={app.closeSheet}
+      footer={<Foot onSave={save} disabled={!f.amount || !accOk} left={old && <DeleteButton onDelete={() => { db.remove('tx', id); app.closeSheet(); app.toast("O'chirildi"); }} />} />}>
+      {!old && (
+        <Segmented options={[{ v: 'expense', l: 'Chiqim' }, { v: 'income', l: 'Kirim' }, { v: 'transfer', l: "O'tkazma" }]} value={f.type} onChange={(v) => setF((s) => ({ ...s, type: v, cat: '' }))} />
+      )}
       <Field label="Summa" htmlFor="x-amount">
         <MoneyInput id="x-amount" value={f.amount} onChange={set('amount')} autoFocus={!old} />
       </Field>
-      <Field label="Kategoriya">
-        <Chips options={cats} value={cat} onChange={set('cat')} color={(c) => catColor(c, cats)} />
-      </Field>
+      {isTr ? (
+        <>
+          <Field label="Qayerdan">
+            <AccPicker value={f.from} onChange={(v) => setF((s) => ({ ...s, from: v, to: s.to === v ? '' : s.to }))} label="Qaysi hisobdan" />
+          </Field>
+          <Field label="Qayerga">
+            <AccPicker value={toAcc} onChange={set('to')} exclude={f.from} label="Qaysi hisobga" />
+          </Field>
+          {!old && (
+            <Field label="Komissiya (ixtiyoriy)" htmlFor="x-fee" hint="Kiritilsa, xarajat sifatida alohida yoziladi.">
+              <MoneyInput id="x-fee" value={f.fee} onChange={set('fee')} />
+            </Field>
+          )}
+          <p className="muted small">O'tkazma kirim yoki chiqim hisoblanmaydi: pul bir hisobingizdan boshqasiga o'tadi, xolos.</p>
+        </>
+      ) : (
+        <>
+          <Field label="Kategoriya">
+            <Chips options={cats} value={cat} onChange={set('cat')} color={(c) => catColor(c, cats)} />
+          </Field>
+          <Field label={f.type === 'income' ? 'Qaysi hisobga' : 'Qaysi hisobdan'}>
+            <AccPicker value={f.acc} onChange={set('acc')} label="Hisob" />
+          </Field>
+        </>
+      )}
       <div className="grid2">
         <Field label="Sana" htmlFor="x-date">
           <input id="x-date" type="date" value={f.date} onChange={set('date')} />
         </Field>
         <Field label="Izoh" htmlFor="x-note">
-          <input id="x-note" value={f.note} onChange={set('note')} placeholder="Nimaga" />
+          <input id="x-note" value={f.note} onChange={set('note')} placeholder={isTr ? 'Masalan: bankomatdan yechdim' : 'Nimaga'} />
         </Field>
       </div>
     </Sheet>
@@ -309,10 +351,11 @@ export function SpendSheet() {
   const items = db.shop.filter((s) => s.bought);
   const cats = db.settings.expenseCats;
   const sum = items.reduce((a, s) => a + (s.price || 0), 0);
-  const [f, set] = useForm({ amount: sum, cat: cats.includes('Oziq-ovqat') ? 'Oziq-ovqat' : cats[0], date: today(), note: items.map((s) => s.name).join(', ') });
+  const [f, set] = useForm({ amount: sum, cat: cats.includes('Oziq-ovqat') ? 'Oziq-ovqat' : cats[0], date: today(), note: items.map((s) => s.name).join(', '), acc: lastAcc(db.accounts) });
   const save = () => {
     if (!f.amount) return;
-    const d = { type: 'expense', amount: f.amount, cat: f.cat, date: f.date, note: f.note ? 'Bozorlik: ' + f.note : 'Bozorlik' };
+    const d = { type: 'expense', amount: f.amount, cat: f.cat, acc: f.acc, date: f.date, note: f.note ? 'Bozorlik: ' + f.note : 'Bozorlik' };
+    rememberAcc(f.acc);
     db.add('tx', d);
     items.forEach((s) => db.remove('shop', s.id));
     app.closeSheet();
@@ -334,6 +377,9 @@ export function SpendSheet() {
       </Field>
       <Field label="Kategoriya">
         <Chips options={cats} value={f.cat} onChange={set('cat')} color={(c) => catColor(c, cats)} />
+      </Field>
+      <Field label="Qaysi hisobdan">
+        <AccPicker value={f.acc} onChange={set('acc')} label="Hisob" />
       </Field>
       <div className="grid2">
         <Field label="Sana" htmlFor="sp-date">
@@ -475,7 +521,8 @@ const QUICK = [
   { k: 'expense', l: 'Chiqim', icon: 'down', c: 'var(--c-money)' },
   { k: 'income', l: 'Kirim', icon: 'up', c: 'var(--c-money)' },
   { k: 'shop', l: 'Bozorlik', icon: 'cart', c: 'var(--c-money)' },
-  { k: 'debt', l: 'Qarz', icon: 'swap', c: 'var(--c-money)' },
+  { k: 'transfer', l: "O'tkazma", icon: 'swap', c: 'var(--c-money)' },
+  { k: 'debt', l: 'Qarz', icon: 'coins', c: 'var(--c-money)' },
   { k: 'idea', l: "G'oya", icon: 'bulb', c: 'var(--c-thoughts)' },
   { k: 'plan', l: 'Reja', icon: 'target', c: 'var(--c-thoughts)' },
   { k: 'book', l: 'Kitob', icon: 'book', c: 'var(--c-books)' },
@@ -484,7 +531,7 @@ const QUICK = [
 export function QuickAdd() {
   const app = useApp();
   const pick = (k) => {
-    if (k === 'expense' || k === 'income') app.openSheet('tx', { preset: { type: k } });
+    if (k === 'expense' || k === 'income' || k === 'transfer') app.openSheet('tx', { preset: { type: k } });
     else app.openSheet(k);
   };
   return (
@@ -501,4 +548,4 @@ export function QuickAdd() {
   );
 }
 
-export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, shoplist: ShopListSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, quick: QuickAdd };
+export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, shoplist: ShopListSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, account: AccountSheet, adjust: AdjustSheet, quick: QuickAdd };

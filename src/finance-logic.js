@@ -10,7 +10,7 @@ export function monthTotals(tx, key) {
     if (t.type === 'income') {
       income += t.amount || 0;
       incByCat[t.cat] = (incByCat[t.cat] || 0) + (t.amount || 0);
-    } else {
+    } else if (t.type === 'expense') {
       expense += t.amount || 0;
       byCat[t.cat] = (byCat[t.cat] || 0) + (t.amount || 0);
     }
@@ -49,7 +49,7 @@ export function yearTotals(tx, year) {
       income += v;
       incByCat[t.cat] = (incByCat[t.cat] || 0) + v;
       months[mi].income += v;
-    } else {
+    } else if (t.type === 'expense') {
       expense += v;
       byCat[t.cat] = (byCat[t.cat] || 0) + v;
       months[mi].expense += v;
