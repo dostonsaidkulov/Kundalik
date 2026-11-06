@@ -6,6 +6,7 @@ import { today, addDays, PRIORITY, TASK_STATUS, IDEA_STATUS, BOOK_STATUS, REMIND
 import { limitState, parseShopList } from './finance-logic.js';
 import { askPermission, notifyNow, NATIVE } from './notify.js';
 import { DebtSheet } from './debts.jsx';
+import { LessonSheet } from './schedule.jsx';
 import { AccPicker, lastAcc, rememberAcc, AccountSheet, AdjustSheet } from './accounts.jsx';
 
 const opts = (o) => Object.entries(o).map(([v, l]) => ({ v, l: typeof l === 'string' ? l : l.label }));
@@ -518,6 +519,7 @@ export function QuoteSheet({ id, preset = {} }) {
 /* ---------------- Tez qo'shish ---------------- */
 const QUICK = [
   { k: 'task', l: 'Vazifa', icon: 'tasks', c: 'var(--c-tasks)' },
+  { k: 'lesson', l: 'Dars', icon: 'calendar', c: 'var(--c-tasks)' },
   { k: 'expense', l: 'Chiqim', icon: 'down', c: 'var(--c-money)' },
   { k: 'income', l: 'Kirim', icon: 'up', c: 'var(--c-money)' },
   { k: 'shop', l: 'Bozorlik', icon: 'cart', c: 'var(--c-money)' },
@@ -548,4 +550,4 @@ export function QuickAdd() {
   );
 }
 
-export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, shoplist: ShopListSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, account: AccountSheet, adjust: AdjustSheet, quick: QuickAdd };
+export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, shoplist: ShopListSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, account: AccountSheet, adjust: AdjustSheet, lesson: LessonSheet, quick: QuickAdd };

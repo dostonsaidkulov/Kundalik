@@ -660,3 +660,43 @@ textarea { resize: vertical; min-height: 44px; line-height: 1.45; }
 .quick { grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .quick button { font-size: 12px; padding: 10px 0; }
 .q-ic { width: 40px; height: 40px; border-radius: 13px; }
+
+/* ---------- Schedule ---------- */
+.page > .seg.small { margin-bottom: 14px; }
+.day-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.day-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 6px; border-radius: 13px; background: var(--surface); box-shadow: var(--shadow); font-weight: 650; font-size: 14.5px; color: var(--ink-2); }
+.day-tab i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--ink-3); min-height: 14px; font-variant-numeric: tabular-nums; }
+.day-tab.today span { color: var(--c-tasks); }
+.day-tab.on { background: var(--primary); color: var(--on-primary); }
+.day-tab.on span, .day-tab.on i { color: var(--on-primary); }
+.day-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 2px 10px; }
+.day-head h3 { font-size: 17px; font-weight: 700; }
+.day-head span { font-size: 13px; color: var(--ink-2); }
+.lessons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.lesson { display: flex; gap: 14px; background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 13px 14px 13px 0; border-left: 4px solid var(--lc); text-align: left; width: 100%; }
+.ls-time { width: 62px; flex: none; display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+.ls-time b { font-size: 16px; font-weight: 720; letter-spacing: -0.01em; }
+.ls-time span { font-size: 13px; color: var(--ink-3); }
+.ls-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ls-subj { font-weight: 660; font-size: 16px; line-height: 1.3; }
+.ls-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13.5px; color: var(--ink-2); }
+.ls-meta > span { display: inline-flex; align-items: center; gap: 4px; }
+.ls-group { font-weight: 650; color: var(--ink); }
+.ls-kind { padding: 0 8px; border-radius: 20px; background: color-mix(in srgb, var(--lc) 13%, transparent); color: var(--lc); font-weight: 600; font-size: 12.5px; }
+.ls-note { font-size: 13px; color: var(--ink-3); }
+.ls-badge { align-self: flex-start; font-size: 12px; font-weight: 650; padding: 2px 8px; border-radius: 20px; }
+.ls-badge.now { background: var(--c-tasks); color: #fff; }
+.ls-badge.next { background: color-mix(in srgb, var(--c-tasks) 13%, transparent); color: var(--c-tasks); }
+.lesson.now { box-shadow: 0 0 0 2px var(--c-tasks), var(--shadow); }
+.lesson.past { opacity: 0.5; }
+.lessons.compact .lesson { box-shadow: none; background: var(--surface-2); padding-block: 10px; }
+.lessons.compact .lesson.now { box-shadow: 0 0 0 2px var(--c-tasks); }
+.lessons.compact { margin-bottom: 0; }
+.today-lessons { grid-column: 1 / -1; }
+.day-pick { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day-pick button { padding: 9px 0; border-radius: 11px; border: 1.5px solid var(--line); background: var(--surface); font-weight: 650; font-size: 14px; color: var(--ink-2); text-align: center; }
+.day-pick button.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.grid2.keep { grid-template-columns: 1fr 1fr; }
+.groups-line { margin-top: 12px; }
+.quick { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.quick button { font-size: 12.5px; padding: 11px 0; }

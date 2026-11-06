@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, newId } from './util.js';
 import { syncReminders } from './notify.js';
 import { DEFAULT_ACCOUNTS } from './accounts.jsx';
 
-const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'accounts', 'meta'];
+const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'accounts', 'lessons', 'meta'];
 const Ctx = createContext(null);
 
 export function DataProvider({ user, backend, children }) {
@@ -39,7 +39,7 @@ export function DataProvider({ user, backend, children }) {
 
   const settings = useMemo(() => {
     const s = (state.meta || []).find((x) => x.id === 'settings') || {};
-    return { ...DEFAULT_SETTINGS, ...s, limits: { ...(s.limits || {}) }, reading: { ...DEFAULT_SETTINGS.reading, ...(s.reading || {}) } };
+    return { ...DEFAULT_SETTINGS, ...s, limits: { ...(s.limits || {}) }, reading: { ...DEFAULT_SETTINGS.reading, ...(s.reading || {}) }, lessonRemind: { ...DEFAULT_SETTINGS.lessonRemind, ...(s.lessonRemind || {}) } };
   }, [state.meta]);
 
   const loaded = COLS.every((c) => state[c] !== null);
@@ -58,6 +58,7 @@ export function DataProvider({ user, backend, children }) {
       books: L('books').sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)),
       quotes: L('quotes').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       debts: L('debts').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
+      lessons: L('lessons'),
       accounts: L('accounts').sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || (a.createdAt || 0) - (b.createdAt || 0)),
       ...api,
     };
@@ -76,9 +77,9 @@ export function DataProvider({ user, backend, children }) {
     if (!loaded) return;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      syncReminders({ tasks: value.tasks, plans: value.plans, books: value.books, debts: value.debts, settings }).catch((e) => console.warn(e));
+      syncReminders({ tasks: value.tasks, plans: value.plans, books: value.books, debts: value.debts, lessons: value.lessons, settings }).catch((e) => console.warn(e));
     }, 1500);
-  }, [loaded, value.tasks, value.plans, value.books, value.debts, settings]);
+  }, [loaded, value.tasks, value.plans, value.books, value.debts, value.lessons, settings]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

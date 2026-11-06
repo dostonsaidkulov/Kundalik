@@ -47,7 +47,7 @@ export function taskReminderTime(t) {
   return base;
 }
 
-export async function syncReminders({ tasks, plans, books, debts = [], settings }) {
+export async function syncReminders({ tasks, plans, books, debts = [], lessons = [], settings }) {
   if (!NATIVE) return;
   const L = await ln();
   const perm = await L.checkPermissions();
@@ -103,6 +103,26 @@ export async function syncReminders({ tasks, plans, books, debts = [], settings 
       schedule: { on: { hour, minute }, allowWhileIdle: true },
       extra: { go: 'books' },
     });
+  }
+  // Har haftalik dars eslatmalari (Capacitor: 1 = Yakshanba, 2 = Dushanba ...)
+  const lr = settings.lessonRemind || { on: true, min: 10 };
+  if (lr.on) {
+    for (const l of lessons) {
+      const [h, m] = (l.start || '08:00').split(':').map(Number);
+      let t = h * 60 + m - (Number(lr.min) || 0);
+      let day = l.day;
+      if (t < 0) {
+        t += 1440;
+        day = day === 1 ? 7 : day - 1;
+      }
+      out.push({
+        id: nid('l' + l.id),
+        title: `${l.start} · ${l.subject}`,
+        body: `${l.group}${l.room ? ', ' + l.room + '-xona' : ''}${l.kind ? ' · ' + l.kind : ''}`,
+        schedule: { on: { weekday: (day % 7) + 1, hour: Math.floor(t / 60), minute: t % 60 }, allowWhileIdle: true },
+        extra: { go: 'tasks' },
+      });
+    }
   }
   if (out.length) await L.schedule({ notifications: out });
 }

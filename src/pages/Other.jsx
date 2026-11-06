@@ -5,6 +5,7 @@ import { Icon, Field, Empty } from '../ui.jsx';
 import { norm, fmtDate, money } from '../util.js';
 import { getBackend, authErrorText, DEMO } from '../backend.js';
 import { askPermission, permissionState, NATIVE } from '../notify.js';
+import { DAYS } from '../schedule.jsx';
 
 /* ---------------- Qidiruv ---------------- */
 export function Search() {
@@ -15,6 +16,7 @@ export function Search() {
   const has = (...xs) => xs.some((x) => norm(Array.isArray(x) ? x.join(' ') : x).includes(s));
   const groups = s.length < 2 ? [] : [
     { l: 'Vazifalar', icon: 'tasks', items: db.tasks.filter((t) => has(t.title, t.note)).map((t) => ({ id: t.id, t: t.title, sub: t.status === 'done' ? 'Bajarilgan' : t.due ? fmtDate(t.due) : '', go: () => app.openSheet('task', { id: t.id }) })) },
+    { l: 'Darslar', icon: 'calendar', items: db.lessons.filter((x) => has(x.subject, x.group, x.room, x.note)).map((x) => ({ id: x.id, t: `${x.subject} · ${x.group}`, sub: `${DAYS[x.day - 1].l}, ${x.start}–${x.end}${x.room ? ' · ' + x.room : ''}`, go: () => app.openSheet('lesson', { id: x.id }) })) },
     { l: 'Rejalar', icon: 'target', items: db.plans.filter((p) => has(p.title, p.goal, p.note, (p.steps || []).map((x) => x.text))).map((p) => ({ id: p.id, t: p.title, sub: p.goal, go: () => app.push('plan', { id: p.id }) })) },
     { l: "G'oyalar", icon: 'bulb', items: db.ideas.filter((i) => has(i.title, i.text, i.tags || [])).map((i) => ({ id: i.id, t: i.title, sub: i.text, go: () => app.openSheet('idea', { id: i.id }) })) },
     { l: 'Kitoblar', icon: 'book', items: db.books.filter((b) => has(b.title, b.author, b.summary)).map((b) => ({ id: b.id, t: b.title, sub: b.author, go: () => app.push('book', { id: b.id }) })) },
@@ -92,6 +94,15 @@ export function Settings() {
   const [perm, setPerm] = useState('web');
   useEffect(() => { permissionState().then(setPerm); }, []);
   const r = db.settings.reading;
+  const lr = db.settings.lessonRemind;
+  const setLesson = async (patch) => {
+    const next = { ...lr, ...patch };
+    if (next.on && NATIVE) {
+      const p = await askPermission();
+      setPerm(p);
+    }
+    db.saveSettings({ lessonRemind: next });
+  };
   const setReading = async (patch) => {
     const next = { ...r, ...patch };
     if (next.on && NATIVE) {
@@ -133,6 +144,22 @@ export function Settings() {
             <span>Bildirishnomalarga ruxsat berilmagan</span>
             <button className="link" onClick={async () => setPerm(await askPermission())}>Ruxsat berish</button>
           </div>
+        )}
+        <label className="switch-row">
+          <span>
+            <b>Dars eslatmasi</b>
+            <span className="muted small">Har bir darsdan oldin, dars jadvali bo'yicha</span>
+          </span>
+          <input type="checkbox" className="switch" checked={!!lr.on} onChange={(e) => setLesson({ on: e.target.checked })} />
+        </label>
+        {lr.on && (
+          <Field label="Necha daqiqa oldin">
+            <div className="chips">
+              {[5, 10, 15, 30, 60].map((m) => (
+                <button key={m} type="button" className={'chip' + (lr.min === m ? ' on' : '')} onClick={() => setLesson({ min: m })}>{m === 60 ? '1 soat' : `${m} daq`}</button>
+              ))}
+            </div>
+          </Field>
         )}
         <label className="switch-row">
           <span>

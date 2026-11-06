@@ -111,6 +111,7 @@ export const DEFAULT_SETTINGS = {
   incomeCats: ['Maosh', "Qo'shimcha daromad", "Sovg'a", 'Boshqa'],
   limits: {},
   reading: { on: false, time: '21:00' },
+  lessonRemind: { on: true, min: 10 },
 };
 
 export const CAT_COLORS = ['#3A63D8', '#12805C', '#C26A12', '#7B4FD0', '#C23B6A', '#1C8DA6', '#8A6D1D', '#5B6B82', '#B4492F', '#4E7A2A'];

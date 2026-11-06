@@ -71,6 +71,17 @@ export function sampleData() {
       card: { name: 'Humo karta', type: 'card', initial: 3200000, order: 1, createdAt: now },
       invest: { name: 'Investitsiya', type: 'invest', initial: 5000000, order: 2, createdAt: now },
     },
+    lessons: obj([
+      { id: 'l1', day: 1, start: '08:30', end: '09:50', subject: 'Polimerlar fizikasi', group: '301-21', room: '214', kind: "Ma'ruza" },
+      { id: 'l2', day: 1, start: '10:00', end: '11:20', subject: 'Polimerlar fizikasi', group: '302-21', room: '118', kind: 'Laboratoriya' },
+      { id: 'l3', day: 3, start: '08:30', end: '09:50', subject: 'Umumiy fizika', group: '105-24', room: '305', kind: 'Amaliy' },
+      { id: 'l4', day: 5, start: '11:30', end: '12:50', subject: 'Umumiy fizika', group: '106-24', room: '305', kind: "Ma'ruza" },
+      ...[1, 2, 3, 4, 5, 6].includes(((new Date().getDay() + 6) % 7) + 1) ? [
+        { id: 'l5', day: ((new Date().getDay() + 6) % 7) + 1, start: '09:00', end: '10:20', subject: 'Polimerlar fizikasi', group: '301-21', room: '214', kind: "Ma'ruza" },
+        { id: 'l6', day: ((new Date().getDay() + 6) % 7) + 1, start: '13:30', end: '14:50', subject: 'Umumiy fizika', group: '105-24', room: '305', kind: 'Amaliy' },
+        { id: 'l7', day: ((new Date().getDay() + 6) % 7) + 1, start: '15:00', end: '16:20', subject: 'Polimerlar fizikasi', group: '302-21', room: '118', kind: 'Laboratoriya' },
+      ] : [],
+    ]),
     debts: obj([
       { id: 'd1', dir: 'lent', person: 'Jasur', amount: 1500000, date: d(4), due: addDays(t, 3), note: 'Telefon uchun', remind: true, payments: [{ id: 'p1', amount: 500000, date: d(1) }], closed: false },
       { id: 'd2', dir: 'borrowed', person: 'Akam', amount: 2000000, date: d(2), due: addDays(t, 20), note: '', remind: true, payments: [], closed: false },

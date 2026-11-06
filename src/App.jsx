@@ -115,7 +115,7 @@ function Shell() {
     const V = VIEWS[top.view];
     content = <V key={top.view + (top.props.id || '')} {...top.props} />;
   } else if (tab === 'home') content = <Home />;
-  else if (tab === 'tasks') content = <Tasks />;
+  else if (tab === 'tasks') content = <Tasks sub={subs.tasks} setSub={setSub('tasks')} day={subs.day} setDay={setSub('day')} />;
   else if (tab === 'money') content = <Finance sub={subs.money} setSub={setSub('money')} />;
   else if (tab === 'books') content = <Books sub={subs.books} setSub={setSub('books')} />;
   else content = <Thoughts sub={subs.thoughts} setSub={setSub('thoughts')} />;
@@ -125,7 +125,7 @@ function Shell() {
     if (top?.view === 'book') return api.openSheet('quote', { preset: { bookId: top.props.id } });
     if (top?.view === 'account') return api.openSheet('tx', { preset: { type: 'expense', acc: top.props.id } });
     if (top?.view === 'plan') return api.openSheet('task', { preset: { planId: top.props.id, due: '' } });
-    if (tab === 'tasks') return api.openSheet('task');
+    if (tab === 'tasks') return subs.tasks === 'schedule' ? api.openSheet('lesson', subs.day ? { preset: { days: [subs.day] } } : {}) : api.openSheet('task');
     if (tab === 'money') return subs.money === 'shop' ? api.openSheet('shop') : subs.money === 'debts' ? api.openSheet('debt') : api.openSheet('tx', { preset: { type: 'expense' } });
     if (tab === 'books') return subs.books === 'quotes' ? api.openSheet('quote') : api.openSheet('book');
     if (tab === 'thoughts') return subs.thoughts === 'plans' ? api.openSheet('plan') : api.openSheet('idea');

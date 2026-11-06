@@ -6,6 +6,7 @@ import { monthTotals, limitAlerts } from '../finance-logic.js';
 import { DEMO } from '../backend.js';
 import { debtTotals } from '../debts.jsx';
 import { totalBalance } from '../accounts.jsx';
+import { TodayLessons } from '../schedule.jsx';
 
 export default function Home() {
   const db = useData();
@@ -47,6 +48,7 @@ export default function Home() {
       )}
 
       <div className="home-grid">
+        <TodayLessons />
         <section className="card today-card" style={{ '--sc': 'var(--c-tasks)' }}>
           <div className="card-head">
             <span className="card-ic"><Icon name="tasks" size={18} /></span>

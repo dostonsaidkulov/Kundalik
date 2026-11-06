@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useData } from '../data.jsx';
 import { useApp } from '../appctx.js';
 import { Icon, Segmented, Check, Empty } from '../ui.jsx';
+import { Schedule } from '../schedule.jsx';
 import { today, addDays, fmtDate, PRIORITY, REMIND } from '../util.js';
 
 export function TaskRow({ t, showPlan = true }) {
@@ -36,10 +37,11 @@ const sortTasks = (a, b) =>
   (a.time || '99').localeCompare(b.time || '99') ||
   (a.createdAt || 0) - (b.createdAt || 0);
 
-export default function Tasks() {
+export default function Tasks({ sub, setSub, day, setDay }) {
   const db = useData();
   const app = useApp();
   const [view, setView] = useState('open');
+  const tab = sub || 'tasks';
   const t = today();
   const tom = addDays(t, 1);
   const open = db.tasks.filter((x) => x.status !== 'done');
@@ -57,14 +59,16 @@ export default function Tasks() {
     <div className="page">
       <header className="top">
         <div>
-          <div className="eyebrow">{open.length} ta ochiq</div>
-          <h1>Vazifalar</h1>
+          <div className="eyebrow">{tab === 'schedule' ? `Haftasiga ${db.lessons.length} ta dars` : `${open.length} ta ochiq`}</div>
+          <h1>{tab === 'schedule' ? 'Dars jadvali' : 'Vazifalar'}</h1>
         </div>
         <div className="top-actions">
           <button className="icon-btn" onClick={() => app.push('search')} aria-label="Qidirish"><Icon name="search" /></button>
         </div>
       </header>
-      <Segmented options={[{ v: 'open', l: 'Ochiq', n: open.length }, { v: 'done', l: 'Bajarilgan', n: done.length }]} value={view} onChange={setView} />
+      <Segmented options={[{ v: 'tasks', l: 'Vazifalar' }, { v: 'schedule', l: 'Dars jadvali' }]} value={tab} onChange={setSub} />
+      {tab === 'schedule' ? <Schedule day={day} setDay={setDay} /> : <>
+      <Segmented small options={[{ v: 'open', l: 'Ochiq', n: open.length }, { v: 'done', l: 'Bajarilgan', n: done.length }]} value={view} onChange={setView} />
 
       {view === 'open' && (
         open.length === 0 ? (
@@ -90,6 +94,7 @@ export default function Tasks() {
         )
       )}
       <button className="add-row" onClick={() => app.openSheet('task')}><Icon name="plus" size={18} /> Vazifa qo'shish</button>
+      </>}
     </div>
   );
 }
