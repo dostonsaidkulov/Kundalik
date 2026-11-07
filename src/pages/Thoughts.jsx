@@ -4,6 +4,7 @@ import { useApp } from '../appctx.js';
 import { Icon, Segmented, Chips, Empty, Progress, Check } from '../ui.jsx';
 import { IDEA_STATUS, fmtDate, today, daysBetween, planProgress, stepDone, newId, dateStr } from '../util.js';
 import { TaskRow } from './Tasks.jsx';
+import { AdviceList } from '../advice.jsx';
 
 export default function Thoughts({ sub, setSub }) {
   const app = useApp();
@@ -13,15 +14,15 @@ export default function Thoughts({ sub, setSub }) {
     <div className="page">
       <header className="top">
         <div>
-          <div className="eyebrow">{db.ideas.length} ta g'oya · {db.plans.length} ta reja</div>
+          <div className="eyebrow">{db.ideas.length} ta g'oya · {db.plans.length} ta reja · {db.advice.length} ta nasihat</div>
           <h1>Fikrlar</h1>
         </div>
         <div className="top-actions">
           <button className="icon-btn" onClick={() => app.push('search')} aria-label="Qidirish"><Icon name="search" /></button>
         </div>
       </header>
-      <Segmented options={[{ v: 'ideas', l: "G'oyalar" }, { v: 'plans', l: 'Rejalar' }]} value={tab} onChange={setSub} />
-      {tab === 'ideas' ? <Ideas /> : <Plans />}
+      <Segmented options={[{ v: 'ideas', l: "G'oyalar" }, { v: 'plans', l: 'Rejalar' }, { v: 'advice', l: 'Nasihatlar' }]} value={tab} onChange={setSub} />
+      {tab === 'ideas' ? <Ideas /> : tab === 'plans' ? <Plans /> : <AdviceList />}
     </div>
   );
 }

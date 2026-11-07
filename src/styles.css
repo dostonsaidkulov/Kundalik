@@ -725,3 +725,26 @@ textarea { resize: vertical; min-height: 44px; line-height: 1.45; }
 .nl-pct.ok { color: var(--ok); }
 .nl-pct.warn { color: var(--warn); }
 .nl-pct.over { color: var(--danger); }
+
+/* ---------- Investitsiyalar alohida ---------- */
+.invest-block { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ib-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ib-head span { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 650; color: var(--c-books); }
+.ib-head b { font-size: 20px; font-weight: 740; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.ib-head small { font-size: 13px; font-weight: 550; color: var(--ink-2); }
+.b-inv { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--c-books); font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* ---------- Nasihatlar ---------- */
+.advice-today { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; border-radius: var(--r); margin-bottom: 16px; background: color-mix(in srgb, var(--c-thoughts) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c-thoughts) 25%, transparent); }
+.at-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 650; color: var(--c-thoughts); letter-spacing: 0.02em; }
+.at-text { font-size: 17.5px; line-height: 1.45; font-weight: 560; letter-spacing: -0.005em; }
+.advice-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; counter-reset: adv; }
+.advice-list li { counter-increment: adv; }
+.advice { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 14px 16px 13px 46px; position: relative; }
+.advice::before { content: counter(adv); position: absolute; left: 14px; top: 13px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--c-thoughts); background: color-mix(in srgb, var(--c-thoughts) 12%, transparent); font-variant-numeric: tabular-nums; }
+.advice.imp::before { background: var(--c-thoughts); color: var(--bg); }
+.adv-text { font-size: 15.5px; line-height: 1.45; white-space: pre-line; }
+.adv-meta { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.adv-imp { font-weight: 650; color: var(--c-thoughts); }
+.advice-card { cursor: pointer; }
+.advice-big { font-size: 17px; line-height: 1.5; font-weight: 520; }

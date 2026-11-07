@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, newId } from './util.js';
 import { syncReminders } from './notify.js';
 import { DEFAULT_ACCOUNTS } from './accounts.jsx';
 
-const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'accounts', 'lessons', 'meta'];
+const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'accounts', 'lessons', 'advice', 'meta'];
 const Ctx = createContext(null);
 
 export function DataProvider({ user, backend, children }) {
@@ -39,7 +39,7 @@ export function DataProvider({ user, backend, children }) {
 
   const settings = useMemo(() => {
     const s = (state.meta || []).find((x) => x.id === 'settings') || {};
-    return { ...DEFAULT_SETTINGS, ...s, limits: { ...(s.limits || {}) }, reading: { ...DEFAULT_SETTINGS.reading, ...(s.reading || {}) }, lessonRemind: { ...DEFAULT_SETTINGS.lessonRemind, ...(s.lessonRemind || {}) } };
+    return { ...DEFAULT_SETTINGS, ...s, limits: { ...(s.limits || {}) }, reading: { ...DEFAULT_SETTINGS.reading, ...(s.reading || {}) }, lessonRemind: { ...DEFAULT_SETTINGS.lessonRemind, ...(s.lessonRemind || {}) }, adviceRemind: { ...DEFAULT_SETTINGS.adviceRemind, ...(s.adviceRemind || {}) } };
   }, [state.meta]);
 
   const loaded = COLS.every((c) => state[c] !== null);
@@ -59,6 +59,7 @@ export function DataProvider({ user, backend, children }) {
       quotes: L('quotes').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       debts: L('debts').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
       lessons: L('lessons'),
+      advice: L('advice'),
       accounts: L('accounts').sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || (a.createdAt || 0) - (b.createdAt || 0)),
       ...api,
     };
@@ -77,9 +78,9 @@ export function DataProvider({ user, backend, children }) {
     if (!loaded) return;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      syncReminders({ tasks: value.tasks, plans: value.plans, books: value.books, debts: value.debts, lessons: value.lessons, settings }).catch((e) => console.warn(e));
+      syncReminders({ tasks: value.tasks, plans: value.plans, books: value.books, debts: value.debts, lessons: value.lessons, advice: value.advice, settings }).catch((e) => console.warn(e));
     }, 1500);
-  }, [loaded, value.tasks, value.plans, value.books, value.debts, value.lessons, settings]);
+  }, [loaded, value.tasks, value.plans, value.books, value.debts, value.lessons, value.advice, settings]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

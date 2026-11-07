@@ -137,23 +137,26 @@ export function AccountsBlock() {
   const app = useApp();
   const bal = balances(db.accounts, db.tx);
   const live = db.accounts.filter((a) => !a.archived);
-  const total = live.reduce((s, a) => s + (bal[a.id] || 0), 0);
-  const invest = live.filter((a) => a.type === 'invest').reduce((s, a) => s + (bal[a.id] || 0), 0);
+  const main = live.filter((a) => a.type !== 'invest');
+  const inv = live.filter((a) => a.type === 'invest');
+  const total = main.reduce((s, a) => s + (bal[a.id] || 0), 0);
+  const invest = inv.reduce((s, a) => s + (bal[a.id] || 0), 0);
+  const Card = ({ a }) => (
+    <button className="acc-card" onClick={() => app.push('account', { id: a.id })}>
+      <AccIcon acc={a} />
+      <span className="ac-name">{a.name}</span>
+      <b className={(bal[a.id] || 0) < 0 ? 'neg' : ''}>{money(bal[a.id] || 0)}</b>
+    </button>
+  );
   return (
     <section className="accounts">
       <div className="acc-total">
         <span>Jami mablag'</span>
         <b className={total < 0 ? 'neg' : ''}>{money(total)} <small>so'm</small></b>
-        {invest !== 0 && <span className="muted small">shundan investitsiyada {money(invest)}</span>}
+        <span className="muted small">Investitsiyalarsiz, ishlatish mumkin bo'lgan pul</span>
       </div>
       <div className="acc-grid">
-        {live.map((a) => (
-          <button key={a.id} className="acc-card" onClick={() => app.push('account', { id: a.id })}>
-            <AccIcon acc={a} />
-            <span className="ac-name">{a.name}</span>
-            <b className={(bal[a.id] || 0) < 0 ? 'neg' : ''}>{money(bal[a.id] || 0)}</b>
-          </button>
-        ))}
+        {main.map((a) => (<Card key={a.id} a={a} />))}
         <button className="acc-card add" onClick={() => app.openSheet('account')}>
           <Icon name="plus" size={20} />
           <span className="ac-name">Hisob qo'shish</span>
@@ -162,6 +165,17 @@ export function AccountsBlock() {
       <button className="btn soft wide transfer-btn" onClick={() => app.openSheet('tx', { preset: { type: 'transfer' } })}>
         <Icon name="swap" size={18} /> Hisobdan hisobga o'tkazish
       </button>
+      {inv.length > 0 && (
+        <div className="invest-block">
+          <div className="ib-head">
+            <span><Icon name="trend" size={16} /> Investitsiyalar</span>
+            <b>{money(invest)} <small>so'm</small></b>
+          </div>
+          <div className="acc-grid">
+            {inv.map((a) => <Card key={a.id} a={a} />)}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -315,7 +329,8 @@ export function AccountDetail({ id }) {
 export function yearCashflow(accounts, tx, year) {
   const live = accounts;
   const invIds = new Set(live.filter((a) => a.type === 'invest').map((a) => a.id));
-  const start = totalBalance(live, tx, `${year - 1}-12-31`);
+  const main = live.filter((a) => a.type !== 'invest');
+  const start = totalBalance(main, tx, `${year - 1}-12-31`);
   const rows = [];
   for (let m = 1; m <= 12; m++) {
     const key = `${year}-${String(m).padStart(2, '0')}`;
@@ -334,7 +349,7 @@ export function yearCashflow(accounts, tx, year) {
         if (invIds.has(t.from) && !invIds.has(t.to)) invest -= v;
       }
     }
-    const end = totalBalance(live, tx, `${key}-31`);
+    const end = totalBalance(main, tx, `${key}-31`);
     rows.push({ key, m, income, expense, net: income - expense, invest, adjust, end });
   }
   const sum = (k) => rows.reduce((s, r) => s + r[k], 0);

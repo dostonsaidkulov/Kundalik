@@ -82,6 +82,12 @@ export function sampleData() {
         { id: 'l7', day: ((new Date().getDay() + 6) % 7) + 1, start: '15:00', end: '16:20', subject: 'Polimerlar fizikasi', group: '302-21', room: '118', kind: 'Laboratoriya' },
       ] : [],
     ]),
+    advice: obj([
+      { id: 'a1', text: "Javob berishdan oldin bir daqiqa o'ylab ol. Jahl bilan aytilgan gapni qaytarib bo'lmaydi.", source: "O'z tajribam", important: true },
+      { id: 'a2', text: "Eng qiyin ishni ertalab, boshqa narsaga chalg'imasdan qil.", source: "O'z tajribam" },
+      { id: 'a3', text: "Maoshing kelgan kuni avval o'zingga to'la: kamida 10% jamg'armaga.", source: 'Kitobdan' },
+      { id: 'a4', text: "Talabalarga sabr bilan yondash: har biri o'z tezligida o'rganadi.", source: 'Ustozimdan' },
+    ]),
     debts: obj([
       { id: 'd1', dir: 'lent', person: 'Jasur', amount: 1500000, date: d(4), due: addDays(t, 3), note: 'Telefon uchun', remind: true, payments: [{ id: 'p1', amount: 500000, date: d(1) }], closed: false },
       { id: 'd2', dir: 'borrowed', person: 'Akam', amount: 2000000, date: d(2), due: addDays(t, 20), note: '', remind: true, payments: [], closed: false },

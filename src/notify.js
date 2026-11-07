@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core';
-import { hashStr, parseDate, addDays } from './util.js';
+import { hashStr, parseDate, addDays, dateStr as dateKey } from './util.js';
 
 export const NATIVE = Capacitor.isNativePlatform();
 
@@ -47,7 +47,7 @@ export function taskReminderTime(t) {
   return base;
 }
 
-export async function syncReminders({ tasks, plans, books, debts = [], lessons = [], settings }) {
+export async function syncReminders({ tasks, plans, books, debts = [], lessons = [], advice = [], settings }) {
   if (!NATIVE) return;
   const L = await ln();
   const perm = await L.checkPermissions();
@@ -122,6 +122,18 @@ export async function syncReminders({ tasks, plans, books, debts = [], lessons =
         schedule: { on: { weekday: (day % 7) + 1, hour: Math.floor(t / 60), minute: t % 60 }, allowWhileIdle: true },
         extra: { go: 'tasks' },
       });
+    }
+  }
+  // Ertalabki nasihat: keyingi 7 kun, har kuni boshqasi
+  const ar = settings.adviceRemind;
+  if (ar?.on && advice.length) {
+    const { adviceForDate } = await import('./advice.jsx');
+    for (let i = 0; i < 7; i++) {
+      const ds = addDays(dateKey(new Date()), i);
+      const when = at(ds, ar.time || '07:30');
+      if (when <= now) continue;
+      const a = adviceForDate(advice, ds);
+      out.push({ id: nid('adv' + ds), title: 'Kun nasihati', body: a.text, schedule: { at: new Date(when), allowWhileIdle: true }, extra: { go: 'thoughts' } });
     }
   }
   if (out.length) await L.schedule({ notifications: out });

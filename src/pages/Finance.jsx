@@ -414,7 +414,7 @@ function Cashflow({ year, onMonth }) {
         </table>
       </div>
       <p className="muted small">
-        Sof = kirim − chiqim. Hisoblar orasidagi o'tkazmalar bunga kirmaydi.
+        Sof = kirim − chiqim. Hisoblar orasidagi o'tkazmalar bunga kirmaydi. Qoldiq investitsiyalarsiz ko'rsatilgan.
         {showInv && " «Invest.» ustunida investitsiya hisobiga o'tkazilgan pul ko'rsatilgan."}
         {showAdj && ` Qoldiq to'g'rilashlari va investitsiya qiymati o'zgarishi: ${full(cf.adjust)} so'm.`}
       </p>

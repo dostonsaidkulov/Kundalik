@@ -7,6 +7,7 @@ import { DEMO } from '../backend.js';
 import { debtTotals } from '../debts.jsx';
 import { totalBalance } from '../accounts.jsx';
 import { TodayLessons } from '../schedule.jsx';
+import { AdviceOfDay } from '../advice.jsx';
 
 export default function Home() {
   const db = useData();
@@ -25,7 +26,8 @@ export default function Home() {
   const idea = db.ideas.find((i) => i.status !== 'planned') || db.ideas[0];
   const shopLeft = db.shop.filter((s) => !s.bought).length;
   const debt = debtTotals(db.debts);
-  const total = totalBalance(db.accounts.filter((a) => !a.archived), db.tx);
+  const total = totalBalance(db.accounts.filter((a) => !a.archived && a.type !== 'invest'), db.tx);
+  const invTotal = totalBalance(db.accounts.filter((a) => !a.archived && a.type === 'invest'), db.tx);
   const activePlans = db.plans.filter((p) => !p.deadline || p.deadline >= t).slice(0, 2);
 
   return (
@@ -81,6 +83,7 @@ export default function Home() {
           <div className="balance">
             <span className="b-label">Jami mablag'</span>
             <span className={'b-num' + (total < 0 ? ' neg' : '')}>{money(total)}<small> so'm</small></span>
+            {invTotal !== 0 && <span className="b-inv"><Icon name="trend" size={14} /> Investitsiyalar: {money(invTotal)} so'm</span>}
           </div>
           <div className="io">
             <div><span className="io-l"><Icon name="up" size={14} /> Kirim</span><b>{money(m.income)}</b></div>
@@ -127,6 +130,7 @@ export default function Home() {
           )}
         </section>
 
+        <AdviceOfDay />
         {quote && (
           <section className="card quote-card" onClick={() => app.openSheet('quote', { id: quote.id })}>
             <Icon name="quote" size={26} className="q-mark" />

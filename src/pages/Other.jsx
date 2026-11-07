@@ -17,6 +17,7 @@ export function Search() {
   const groups = s.length < 2 ? [] : [
     { l: 'Vazifalar', icon: 'tasks', items: db.tasks.filter((t) => has(t.title, t.note)).map((t) => ({ id: t.id, t: t.title, sub: t.status === 'done' ? 'Bajarilgan' : t.due ? fmtDate(t.due) : '', go: () => app.openSheet('task', { id: t.id }) })) },
     { l: 'Darslar', icon: 'calendar', items: db.lessons.filter((x) => has(x.subject, x.group, x.room, x.note)).map((x) => ({ id: x.id, t: `${x.subject} · ${x.group}`, sub: `${DAYS[x.day - 1].l}, ${x.start}–${x.end}${x.room ? ' · ' + x.room : ''}`, go: () => app.openSheet('lesson', { id: x.id }) })) },
+    { l: 'Nasihatlar', icon: 'sparkle', items: db.advice.filter((x) => has(x.text, x.source)).map((x) => ({ id: x.id, t: x.text, sub: x.source, go: () => app.openSheet('advice', { id: x.id }) })) },
     { l: 'Rejalar', icon: 'target', items: db.plans.filter((p) => has(p.title, p.goal, p.note, (p.steps || []).map((x) => x.text))).map((p) => ({ id: p.id, t: p.title, sub: p.goal, go: () => app.push('plan', { id: p.id }) })) },
     { l: "G'oyalar", icon: 'bulb', items: db.ideas.filter((i) => has(i.title, i.text, i.tags || [])).map((i) => ({ id: i.id, t: i.title, sub: i.text, go: () => app.openSheet('idea', { id: i.id }) })) },
     { l: 'Kitoblar', icon: 'book', items: db.books.filter((b) => has(b.title, b.author, b.summary)).map((b) => ({ id: b.id, t: b.title, sub: b.author, go: () => app.push('book', { id: b.id }) })) },
@@ -95,6 +96,12 @@ export function Settings() {
   useEffect(() => { permissionState().then(setPerm); }, []);
   const r = db.settings.reading;
   const lr = db.settings.lessonRemind;
+  const ar = db.settings.adviceRemind;
+  const setAdvice = async (patch) => {
+    const next = { ...ar, ...patch };
+    if (next.on && NATIVE) setPerm(await askPermission());
+    db.saveSettings({ adviceRemind: next });
+  };
   const setLesson = async (patch) => {
     const next = { ...lr, ...patch };
     if (next.on && NATIVE) {
@@ -159,6 +166,18 @@ export function Settings() {
                 <button key={m} type="button" className={'chip' + (lr.min === m ? ' on' : '')} onClick={() => setLesson({ min: m })}>{m === 60 ? '1 soat' : `${m} daq`}</button>
               ))}
             </div>
+          </Field>
+        )}
+        <label className="switch-row">
+          <span>
+            <b>Ertalabki nasihat</b>
+            <span className="muted small">Har kuni nasihatlaringizdan biri bildirishnoma bo'lib keladi</span>
+          </span>
+          <input type="checkbox" className="switch" checked={!!ar.on} onChange={(e) => setAdvice({ on: e.target.checked })} />
+        </label>
+        {ar.on && (
+          <Field label="Vaqti" htmlFor="adv-time">
+            <input id="adv-time" type="time" value={ar.time} onChange={(e) => setAdvice({ time: e.target.value })} />
           </Field>
         )}
         <label className="switch-row">

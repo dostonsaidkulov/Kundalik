@@ -128,7 +128,7 @@ function Shell() {
     if (tab === 'tasks') return subs.tasks === 'schedule' ? api.openSheet('lesson', subs.day ? { preset: { days: [subs.day] } } : {}) : api.openSheet('task');
     if (tab === 'money') return subs.money === 'shop' ? api.openSheet('shop') : subs.money === 'debts' ? api.openSheet('debt') : api.openSheet('tx', { preset: { type: 'expense' } });
     if (tab === 'books') return subs.books === 'quotes' ? api.openSheet('quote') : api.openSheet('book');
-    if (tab === 'thoughts') return subs.thoughts === 'plans' ? api.openSheet('plan') : api.openSheet('idea');
+    if (tab === 'thoughts') return subs.thoughts === 'plans' ? api.openSheet('plan') : subs.thoughts === 'advice' ? api.openSheet('advice') : api.openSheet('idea');
     return api.openSheet('quick');
   };
 
