@@ -4,8 +4,8 @@ import { useApp } from '../appctx.js';
 import { Icon, Segmented, Empty, Check } from '../ui.jsx';
 import { today, monthKey, shiftMonth, monthLabel, money, fmtDate, catColor, MONTHS, NATURE, natureTotals } from '../util.js';
 import { monthTotals, limitState, yearTotals, parseShopList } from '../finance-logic.js';
-import { Debts, isClosed } from '../debts.jsx';
-import { AccountsBlock, TxRow, yearCashflow } from '../accounts.jsx';
+import { Debts, isClosed, DebtDynamics } from '../debts.jsx';
+import { AccountsBlock, TxRow, yearCashflow, BalanceDynamics } from '../accounts.jsx';
 
 export default function Finance({ sub, setSub }) {
   const app = useApp();
@@ -76,11 +76,11 @@ function Ledger({ mkey }) {
         </div>
         <div className="sum-io">
           <button onClick={() => app.openSheet('tx', { preset: { type: 'income' } })}>
-            <span className="io-l in"><Icon name="up" size={14} /> Kirim</span>
+            <span className="io-l in"><Icon name="down" size={14} /> Kirim</span>
             <b>{money(m.income)}</b>
           </button>
           <button onClick={() => app.openSheet('tx', { preset: { type: 'expense' } })}>
-            <span className="io-l out"><Icon name="down" size={14} /> Chiqim</span>
+            <span className="io-l out"><Icon name="up" size={14} /> Chiqim</span>
             <b>{money(m.expense)}</b>
           </button>
         </div>
@@ -292,8 +292,8 @@ function YearReport({ year, onMonth }) {
           <b className={y.balance < 0 ? 'neg' : ''}>{money(y.balance)} <small>so'm</small></b>
         </div>
         <div className="sum-io static">
-          <div><span className="io-l in"><Icon name="up" size={14} /> Kirim</span><b>{money(y.income)}</b></div>
-          <div><span className="io-l out"><Icon name="down" size={14} /> Chiqim</span><b>{money(y.expense)}</b></div>
+          <div><span className="io-l in"><Icon name="down" size={14} /> Kirim</span><b>{money(y.income)}</b></div>
+          <div><span className="io-l out"><Icon name="up" size={14} /> Chiqim</span><b>{money(y.expense)}</b></div>
         </div>
         <div className="year-facts">
           <div><span>Oyiga o'rtacha chiqim</span><b>{money(y.expense / activeMonths)}</b></div>
@@ -302,7 +302,9 @@ function YearReport({ year, onMonth }) {
       </section>
 
       <NatureCard list={db.tx.filter((t) => t.date && t.date.slice(0, 4) === String(year))} title="50/30/20 qoidasi" />
+      <BalanceDynamics year={year} />
       <Cashflow year={year} onMonth={onMonth} />
+      <DebtDynamics year={year} />
 
       <section className="card report-card">
         <div className="card-head"><h2>12 oy</h2></div>

@@ -575,8 +575,8 @@ export function QuoteSheet({ id, preset = {} }) {
 const QUICK = [
   { k: 'task', l: 'Vazifa', icon: 'tasks', c: 'var(--c-tasks)' },
   { k: 'lesson', l: 'Dars', icon: 'calendar', c: 'var(--c-tasks)' },
-  { k: 'expense', l: 'Chiqim', icon: 'down', c: 'var(--c-money)' },
-  { k: 'income', l: 'Kirim', icon: 'up', c: 'var(--c-money)' },
+  { k: 'expense', l: 'Chiqim', icon: 'up', c: 'var(--c-money)' },
+  { k: 'income', l: 'Kirim', icon: 'down', c: 'var(--c-money)' },
   { k: 'shop', l: 'Bozorlik', icon: 'cart', c: 'var(--c-money)' },
   { k: 'transfer', l: "O'tkazma", icon: 'swap', c: 'var(--c-money)' },
   { k: 'debt', l: 'Qarz', icon: 'coins', c: 'var(--c-money)' },

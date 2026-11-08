@@ -3,6 +3,7 @@ import { useData } from './data.jsx';
 import { useApp } from './appctx.js';
 import { Sheet, Field, Segmented, DeleteButton, MoneyInput, Icon, Empty, Progress } from './ui.jsx';
 import { today, money, fmtDate, hashStr, CAT_COLORS } from './util.js';
+import { LineChart, short } from './chart.jsx';
 
 // Qarz: dir = 'lent' (men berdim, menga qaytarishadi) | 'borrowed' (men oldim, men qaytaraman)
 export const DEBT_DIR = {
@@ -185,15 +186,16 @@ export function Debts() {
       <div className="summary debt-sum">
         <div className="sum-io">
           <button onClick={() => app.openSheet('debt', { preset: { dir: 'lent' } })}>
-            <span className="io-l in"><Icon name="up" size={14} /> Menga qaytarishadi</span>
+            <span className="io-l in"><Icon name="down" size={14} /> Menga qaytarishadi</span>
             <b className="in">{money(tot.lent)}</b>
           </button>
           <button onClick={() => app.openSheet('debt', { preset: { dir: 'borrowed' } })}>
-            <span className="io-l out"><Icon name="down" size={14} /> Men qaytaraman</span>
+            <span className="io-l out"><Icon name="up" size={14} /> Men qaytaraman</span>
             <b>{money(tot.borrowed)}</b>
           </button>
         </div>
       </div>
+      <DebtDynamics title={`${new Date().getFullYear()}-yil dinamikasi`} />
       <Segmented small options={[{ v: 'open', l: 'Ochiq', n: open.length }, { v: 'closed', l: 'Yopilgan', n: closed.length }]} value={view} onChange={setView} />
       <div style={{ height: 14 }} />
       {list.length === 0 ? (
@@ -213,5 +215,56 @@ export function Debts() {
       )}
       <button className="add-row" onClick={() => app.openSheet('debt')}><Icon name="plus" size={18} /> Qarz qo'shish</button>
     </>
+  );
+}
+
+/** Oy oxiridagi qarz qoldiqlari: menga qarzdorlar va mening qarzlarim */
+export function debtSeries(debts, year) {
+  const cur = today().slice(0, 7);
+  const lent = [];
+  const borrowed = [];
+  for (let i = 1; i <= 12; i++) {
+    const key = `${year}-${String(i).padStart(2, '0')}`;
+    if (key > cur) {
+      lent.push(null);
+      borrowed.push(null);
+      continue;
+    }
+    const end = `${key}-31`;
+    let l = 0;
+    let b = 0;
+    for (const d of debts) {
+      if (!d.date || d.date > end) continue;
+      const back = (d.payments || []).filter((p) => p.date <= end).reduce((s, p) => s + (p.amount || 0), 0);
+      const left = Math.max(0, (d.amount || 0) - back);
+      if (d.dir === 'lent') l += left;
+      else b += left;
+    }
+    lent.push(l);
+    borrowed.push(b);
+  }
+  return { lent, borrowed };
+}
+
+export function DebtDynamics({ year = new Date().getFullYear(), title = 'Qarzlar dinamikasi' }) {
+  const db = useData();
+  if (!db.debts.length) return null;
+  const s = debtSeries(db.debts, year);
+  const series = [
+    { name: 'Menga qarzdorlar', color: 'var(--ch-lent)', values: s.lent },
+    { name: 'Mening qarzlarim', color: 'var(--ch-borrow)', values: s.borrowed },
+  ];
+  const n = s.borrowed.filter((x) => x != null);
+  const firstB = n[0] ?? 0;
+  const lastB = n[n.length - 1] ?? 0;
+  return (
+    <section className="card report-card">
+      <div className="card-head">
+        <h2>{title}</h2>
+        {n.length > 1 && firstB !== lastB && <span className="card-meta">qarzim {lastB < firstB ? `${short(firstB - lastB)} kamaydi` : `${short(lastB - firstB)} oshdi`}</span>}
+      </div>
+      <LineChart series={series} label={`${year}-yil qarzlar o'zgarishi`} />
+      <p className="muted small">Har oy oxirida qancha qarz qolgani. Qisman qaytarilgan pullar ham hisobga olingan.</p>
+    </section>
   );
 }

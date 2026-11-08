@@ -86,8 +86,8 @@ export default function Home() {
             {invTotal !== 0 && <span className="b-inv"><Icon name="trend" size={14} /> Investitsiyalar: {money(invTotal)} so'm</span>}
           </div>
           <div className="io">
-            <div><span className="io-l"><Icon name="up" size={14} /> Kirim</span><b>{money(m.income)}</b></div>
-            <div><span className="io-l"><Icon name="down" size={14} /> Chiqim</span><b>{money(m.expense)}</b></div>
+            <div><span className="io-l"><Icon name="down" size={14} /> Kirim</span><b>{money(m.income)}</b></div>
+            <div><span className="io-l"><Icon name="up" size={14} /> Chiqim</span><b>{money(m.expense)}</b></div>
           </div>
           {alerts.slice(0, 2).map((a) => (
             <div key={a.cat} className={'alert ' + a.level}>

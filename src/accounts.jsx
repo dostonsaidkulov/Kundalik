@@ -3,6 +3,7 @@ import { useData } from './data.jsx';
 import { useApp } from './appctx.js';
 import { Sheet, Field, Segmented, DeleteButton, MoneyInput, Icon, Empty } from './ui.jsx';
 import { today, money, fmtDate, catColor, NATURE, natureOf } from './util.js';
+import { LineChart, short } from './chart.jsx';
 
 export const ACC_TYPES = {
   cash: { l: 'Naqd pul', icon: 'cash', c: 'var(--c-money)' },
@@ -118,7 +119,7 @@ export function TxRow({ t, accountView }) {
   return (
     <li className="tx-row" onClick={() => app.openSheet('tx', { id: t.id })}>
       <span className="tx-ic" style={{ '--cc': catColor(t.cat, cats) }}>
-        <Icon name={t.type === 'income' ? 'up' : 'down'} size={16} />
+        <Icon name={t.type === 'income' ? 'down' : 'up'} size={16} />
       </span>
       <div className="tr-main">
         <div className="tr-title">{t.cat}</div>
@@ -306,8 +307,8 @@ export function AccountDetail({ id }) {
         )}
       </div>
       <div className="acc-actions">
-        <button onClick={() => app.openSheet('tx', { preset: { type: 'income', acc: id } })}><Icon name="up" size={18} /><span>Kirim</span></button>
-        <button onClick={() => app.openSheet('tx', { preset: { type: 'expense', acc: id } })}><Icon name="down" size={18} /><span>Chiqim</span></button>
+        <button onClick={() => app.openSheet('tx', { preset: { type: 'income', acc: id } })}><Icon name="down" size={18} /><span>Kirim</span></button>
+        <button onClick={() => app.openSheet('tx', { preset: { type: 'expense', acc: id } })}><Icon name="up" size={18} /><span>Chiqim</span></button>
         <button onClick={() => app.openSheet('tx', { preset: { type: 'transfer', from: id } })}><Icon name="swap" size={18} /><span>O'tkazma</span></button>
         <button onClick={() => app.openSheet('adjust', { preset: { acc: id } })}><Icon name="edit" size={18} /><span>{invest ? 'Qiymat' : "To'g'rilash"}</span></button>
       </div>
@@ -354,4 +355,46 @@ export function yearCashflow(accounts, tx, year) {
   }
   const sum = (k) => rows.reduce((s, r) => s + r[k], 0);
   return { start, rows, income: sum('income'), expense: sum('expense'), net: sum('net'), invest: sum('invest'), adjust: sum('adjust'), end: rows[11].end };
+}
+
+/** Oyma-oy balans: asosiy (investitsiyalarsiz) va investitsiyalar, oy oxiridagi holat */
+export function balanceSeries(accounts, tx, year) {
+  const live = accounts.filter((a) => !a.archived);
+  const main = live.filter((a) => a.type !== 'invest');
+  const inv = live.filter((a) => a.type === 'invest');
+  const cur = today().slice(0, 7);
+  const m = [];
+  const v = [];
+  for (let i = 1; i <= 12; i++) {
+    const key = `${year}-${String(i).padStart(2, '0')}`;
+    if (key > cur) {
+      m.push(null);
+      v.push(null);
+      continue;
+    }
+    m.push(totalBalance(main, tx, `${key}-31`));
+    v.push(inv.length ? totalBalance(inv, tx, `${key}-31`) : null);
+  }
+  return { main: m, inv: v, hasInv: inv.length > 0 };
+}
+
+export function BalanceDynamics({ year }) {
+  const db = useData();
+  const s = balanceSeries(db.accounts, db.tx, year);
+  const series = [{ name: "Jami mablag'", color: 'var(--ch-bal)', values: s.main }];
+  if (s.hasInv && s.inv.some((x) => x)) series.push({ name: 'Investitsiyalar', color: 'var(--ch-inv)', values: s.inv });
+  const vals = s.main.filter((x) => x != null);
+  const first = vals[0] ?? 0;
+  const last = vals[vals.length - 1] ?? 0;
+  const diff = last - first;
+  return (
+    <section className="card report-card">
+      <div className="card-head">
+        <h2>Balans dinamikasi</h2>
+        {vals.length > 1 && <span className={'card-meta ' + (diff >= 0 ? 'pos' : 'neg')}>{diff >= 0 ? '+' : '−'}{short(Math.abs(diff))} yil boshidan</span>}
+      </div>
+      <LineChart series={series} label={`${year}-yil oylar bo'yicha balans`} />
+      <p className="muted small">Har oy oxiridagi holat. Grafik ustida barmog'ingizni yurgizsangiz, aniq summalar chiqadi.</p>
+    </section>
+  );
 }
