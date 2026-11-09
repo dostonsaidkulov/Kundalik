@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="w_bg">#FFFFFF</color>
+    <color name="w_ink">#141921</color>
+    <color name="w_muted">#5B6575</color>
+    <color name="w_line">#DFE3EA</color>
+    <color name="w_btn">#E8ECF1</color>
+    <color name="w_blue">#3559D1</color>
+    <color name="w_amber">#B8650F</color>
+    <color name="w_violet">#7348C9</color>
+    <string name="widget_desc">Balans, bugungi vazifalar va kun nasihati</string>
+
+    <style name="WidgetTask">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:textColor">@color/w_ink</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="WidgetButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/widget_btn</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
+        <item name="android:textColor">@color/w_ink</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>

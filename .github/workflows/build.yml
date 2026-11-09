@@ -60,7 +60,8 @@ jobs:
         run: |
           find android/app/src/main/res -name 'splash.png' -delete
           cp -r android-res/res/. android/app/src/main/res/
-          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />#' android/app/src/main/AndroidManifest.xml
+          cp -r android-res/java/. android/app/src/main/java/
+          python3 android-res/patch_android.py
           sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
           npx cap sync android
 

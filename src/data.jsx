@@ -3,6 +3,7 @@ import { getBackend } from './backend.js';
 import { DEFAULT_SETTINGS, newId } from './util.js';
 import { syncReminders } from './notify.js';
 import { DEFAULT_ACCOUNTS } from './accounts.jsx';
+import { pushWidget } from './widget.js';
 
 const COLS = ['tasks', 'ideas', 'plans', 'tx', 'shop', 'books', 'quotes', 'debts', 'accounts', 'lessons', 'advice', 'meta'];
 const Ctx = createContext(null);
@@ -78,9 +79,10 @@ export function DataProvider({ user, backend, children }) {
     if (!loaded) return;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
+      pushWidget(value);
       syncReminders({ tasks: value.tasks, plans: value.plans, books: value.books, debts: value.debts, lessons: value.lessons, advice: value.advice, settings }).catch((e) => console.warn(e));
     }, 1500);
-  }, [loaded, value.tasks, value.plans, value.books, value.debts, value.lessons, value.advice, settings]);
+  }, [loaded, value.tasks, value.plans, value.books, value.debts, value.lessons, value.advice, value.tx, value.accounts, settings]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

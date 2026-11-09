@@ -105,7 +105,27 @@ function Shell() {
       });
     });
     onNotificationTap((go) => go && api.go(go));
-    return () => handle && handle.then?.((h) => h.remove());
+    // Vidjet tugmalari: kundalik://add/expense, kundalik://open/tasks ...
+    const handleUrl = (url) => {
+      const m = /^kundalik:\/\/(add|open)\/(\w+)/.exec(url || '');
+      if (!m) return;
+      if (m[1] === 'add') {
+        if (m[2] === 'expense') api.openSheet('tx', { preset: { type: 'expense' } });
+        else if (m[2] === 'task') api.openSheet('task');
+        else if (m[2] === 'idea') api.openSheet('idea');
+      } else if (m[2] === 'money') api.go('money', 'tx');
+      else if (m[2] === 'tasks') api.go('tasks', 'tasks');
+      else if (m[2] === 'advice') api.go('thoughts', 'advice');
+    };
+    let urlHandle;
+    import('@capacitor/app').then(({ App: CapApp }) => {
+      CapApp.getLaunchUrl().then((r) => r && handleUrl(r.url)).catch(() => {});
+      urlHandle = CapApp.addListener('appUrlOpen', (e) => handleUrl(e.url));
+    });
+    return () => {
+      handle && handle.then?.((h) => h.remove());
+      urlHandle && urlHandle.then?.((h) => h.remove());
+    };
   }, [api]);
 
   const setSub = (k) => (v) => setSubs((s) => ({ ...s, [k]: v }));
