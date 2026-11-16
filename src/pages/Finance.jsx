@@ -6,6 +6,7 @@ import { today, monthKey, shiftMonth, monthLabel, money, fmtDate, catColor, MONT
 import { monthTotals, limitState, yearTotals, parseShopList } from '../finance-logic.js';
 import { Debts, isClosed, DebtDynamics } from '../debts.jsx';
 import { AccountsBlock, TxRow, yearCashflow, BalanceDynamics } from '../accounts.jsx';
+import { InvestDynamics } from '../invest.jsx';
 
 export default function Finance({ sub, setSub }) {
   const app = useApp();
@@ -303,6 +304,7 @@ function YearReport({ year, onMonth }) {
 
       <NatureCard list={db.tx.filter((t) => t.date && t.date.slice(0, 4) === String(year))} title="50/30/20 qoidasi" />
       <BalanceDynamics year={year} />
+      <InvestDynamics year={year} compact />
       <Cashflow year={year} onMonth={onMonth} />
       <DebtDynamics year={year} />
 

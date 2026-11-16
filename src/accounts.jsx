@@ -4,6 +4,7 @@ import { useApp } from './appctx.js';
 import { Sheet, Field, Segmented, DeleteButton, MoneyInput, Icon, Empty } from './ui.jsx';
 import { today, money, fmtDate, catColor, NATURE, natureOf } from './util.js';
 import { LineChart, short } from './chart.jsx';
+import { InvestDynamics } from './invest.jsx';
 
 export const ACC_TYPES = {
   cash: { l: 'Naqd pul', icon: 'cash', c: 'var(--c-money)' },
@@ -175,6 +176,7 @@ export function AccountsBlock() {
           <div className="acc-grid">
             {inv.map((a) => <Card key={a.id} a={a} />)}
           </div>
+          <InvestDynamics compact />
         </div>
       )}
     </section>
@@ -312,6 +314,7 @@ export function AccountDetail({ id }) {
         <button onClick={() => app.openSheet('tx', { preset: { type: 'transfer', from: id } })}><Icon name="swap" size={18} /><span>O'tkazma</span></button>
         <button onClick={() => app.openSheet('adjust', { preset: { acc: id } })}><Icon name="edit" size={18} /><span>{invest ? 'Qiymat' : "To'g'rilash"}</span></button>
       </div>
+      {invest && <InvestDynamics accId={id} compact />}
       {days.length === 0 ? (
         <Empty icon="wallet" title="Bu hisobda hali yozuv yo'q" />
       ) : (

@@ -6,6 +6,7 @@ import { norm, fmtDate, money } from '../util.js';
 import { getBackend, authErrorText, DEMO } from '../backend.js';
 import { askPermission, permissionState, NATIVE } from '../notify.js';
 import { DAYS } from '../schedule.jsx';
+import { diaryTitle, firstLine } from '../diary.jsx';
 
 /* ---------------- Qidiruv ---------------- */
 export function Search() {
@@ -15,6 +16,7 @@ export function Search() {
   const s = norm(q.trim());
   const has = (...xs) => xs.some((x) => norm(Array.isArray(x) ? x.join(' ') : x).includes(s));
   const groups = s.length < 2 ? [] : [
+    { l: 'Kundalik', icon: 'diary', items: db.diary.filter((e) => has(e.title, e.text, e.tags || [])).slice(0, 40).map((e) => ({ id: e.id, t: diaryTitle(e), sub: `${fmtDate(e.date, { withYear: true })}${e.title && e.text ? ' · ' + firstLine(e.text) : ''}`, go: () => app.push('diary', { id: e.id }) })) },
     { l: 'Vazifalar', icon: 'tasks', items: db.tasks.filter((t) => has(t.title, t.note)).map((t) => ({ id: t.id, t: t.title, sub: t.status === 'done' ? 'Bajarilgan' : t.due ? fmtDate(t.due) : '', go: () => app.openSheet('task', { id: t.id }) })) },
     { l: 'Darslar', icon: 'calendar', items: db.lessons.filter((x) => has(x.subject, x.group, x.room, x.note)).map((x) => ({ id: x.id, t: `${x.subject} · ${x.group}`, sub: `${DAYS[x.day - 1].l}, ${x.start}–${x.end}${x.room ? ' · ' + x.room : ''}`, go: () => app.openSheet('lesson', { id: x.id }) })) },
     { l: 'Nasihatlar', icon: 'sparkle', items: db.advice.filter((x) => has(x.text, x.source)).map((x) => ({ id: x.id, t: x.text, sub: x.source, go: () => app.openSheet('advice', { id: x.id }) })) },
@@ -37,7 +39,7 @@ export function Search() {
         </div>
       </header>
       {s.length < 2 ? (
-        <div className="calm pad">Vazifa, reja, g'oya, kitob, iqtibos, xarajat va qarzlar ichidan qidiradi.</div>
+        <div className="calm pad">Kundalik, vazifa, reja, g'oya, kitob, iqtibos, xarajat va qarzlar ichidan qidiradi.</div>
       ) : groups.length === 0 ? (
         <Empty icon="search" title="Hech narsa topilmadi" text={`«${q}» so'zi hech qayerda uchramadi.`} />
       ) : (
@@ -198,7 +200,7 @@ export function Settings() {
       <CatEditor title="Chiqim kategoriyalari" list={db.settings.expenseCats} onChange={(v) => db.saveSettings({ expenseCats: v })} />
       <CatEditor title="Kirim kategoriyalari" list={db.settings.incomeCats} onChange={(v) => db.saveSettings({ incomeCats: v })} />
       <button className="btn soft wide" onClick={() => app.openSheet('limits')}><Icon name="wallet" size={18} /> Oylik limitlar</button>
-      <p className="muted small center">Kundalik · 1.0</p>
+      <p className="muted small center">Kundalik · 1.1</p>
     </div>
   );
 }

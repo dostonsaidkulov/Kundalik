@@ -27,8 +27,11 @@ function niceTicks(min, max, count = 4) {
 /**
  * 12 oylik chiziqli grafik. series: [{ name, color, values: (number|null)[12] }]
  * Kelajakdagi oylar null bo'ladi va chizilmaydi.
+ * labels — o'q yozuvlari (standart: Yanvar…Dekabr), tips — maslahat oynasidagi to'liq nomlar.
  */
-export function LineChart({ series, height = 190, label }) {
+export function LineChart({ series, height = 190, label, labels, tips }) {
+  const XL = labels || MONTHS;
+  const N = Math.max(2, XL.length) - 1;
   const wrap = useRef(null);
   const [w, setW] = useState(340);
   const [idx, setIdx] = useState(null);
@@ -49,7 +52,7 @@ export function LineChart({ series, height = 190, label }) {
   const pad = { l: 52, r: 12, t: 10, b: 24 };
   const iw = Math.max(10, w - pad.l - pad.r);
   const ih = height - pad.t - pad.b;
-  const x = (i) => pad.l + (iw * i) / 11;
+  const x = (i) => pad.l + (iw * i) / N;
   const y = (v) => pad.t + ih - ((v - lo) / (hi - lo)) * ih;
   const lastIdx = Math.max(...series.map((s) => s.values.reduce((m, v, i) => (v != null ? i : m), -1)));
   const active = idx != null && idx <= lastIdx ? idx : null;
@@ -65,8 +68,8 @@ export function LineChart({ series, height = 190, label }) {
   const pick = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     const px = e.clientX - r.left;
-    const i = Math.round(((px - pad.l) / iw) * 11);
-    setIdx(Math.max(0, Math.min(11, i)));
+    const i = Math.round(((px - pad.l) / iw) * N);
+    setIdx(Math.max(0, Math.min(N, i)));
   };
 
   return (
@@ -84,8 +87,8 @@ export function LineChart({ series, height = 190, label }) {
               <text x={pad.l - 8} y={y(t) + 4} className="lc-ytick">{short(t)}</text>
             </g>
           ))}
-          {MONTHS.map((m, i) => (i % 2 === 0 || w > 520) && (
-            <text key={m} x={x(i)} y={height - 6} className="lc-xtick">{m.slice(0, 3)}</text>
+          {XL.map((m, i) => (i % 2 === (labels ? N % 2 : 0) || w > 520) && (
+            <text key={i} x={x(i)} y={height - 6} className="lc-xtick">{m.slice(0, 3)}</text>
           ))}
           {active != null && <line x1={x(active)} x2={x(active)} y1={pad.t} y2={pad.t + ih} className="lc-cross" />}
           {series.map((s) => (
@@ -99,7 +102,7 @@ export function LineChart({ series, height = 190, label }) {
         </svg>
         {active != null && (
           <div className="lc-tip" style={{ left: Math.min(Math.max(x(active), 90), w - 90) }}>
-            <b>{MONTHS[active]}</b>
+            <b>{(tips || XL)[active]}</b>
             {series.map((s) => s.values[active] != null && (
               <span key={s.name}><i style={{ background: s.color }} />{s.name}: <em>{money(s.values[active])}</em></span>
             ))}

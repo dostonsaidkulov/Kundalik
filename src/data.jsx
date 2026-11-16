@@ -18,6 +18,18 @@ export function DataProvider({ user, backend, children }) {
     return () => unsubs.forEach((u) => u && u());
   }, [user.uid, backend]);
 
+  // Kundalik alohida "diary" to'plamida. Agar Firestore qoidalari unga ruxsat bermasa,
+  // yozuvlar "meta" to'plamida "diary_" bilan boshlanadigan id bilan saqlanadi.
+  useEffect(() => {
+    const u = backend.subscribe(
+      user.uid,
+      'diary',
+      (list) => setState((s) => ({ ...s, diary: list })),
+      () => setState((s) => ({ ...s, diary: [], diaryDenied: true })),
+    );
+    return () => u && u();
+  }, [user.uid, backend]);
+
   const api = useMemo(() => {
     const put = (col, id, data) => backend.put(user.uid, col, id, data);
     return {
@@ -34,6 +46,12 @@ export function DataProvider({ user, backend, children }) {
       },
       saveSettings(patch) {
         put('meta', 'settings', patch);
+      },
+      updateDiary(id, patch) {
+        put(String(id).startsWith('diary_') ? 'meta' : 'diary', id, { ...patch, updatedAt: Date.now() });
+      },
+      removeDiary(id) {
+        backend.del(user.uid, String(id).startsWith('diary_') ? 'meta' : 'diary', id);
       },
     };
   }, [backend, user.uid]);
@@ -62,6 +80,15 @@ export function DataProvider({ user, backend, children }) {
       lessons: L('lessons'),
       advice: L('advice'),
       accounts: L('accounts').sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || (a.createdAt || 0) - (b.createdAt || 0)),
+      diaryLoaded: state.diary !== undefined,
+      diary: [...(state.diary || []), ...(state.meta || []).filter((x) => String(x.id).startsWith('diary_'))].sort(
+        (a, b) => (b.date || '').localeCompare(a.date || '') || (b.time || '').localeCompare(a.time || '') || (b.createdAt || 0) - (a.createdAt || 0),
+      ),
+      addDiary(data) {
+        const id = (state.diaryDenied ? 'diary_' : '') + newId();
+        backend.put(user.uid, state.diaryDenied ? 'meta' : 'diary', id, { ...data, createdAt: Date.now() });
+        return id;
+      },
       ...api,
     };
   }, [state, api, settings, loaded, user, backend]);

@@ -9,6 +9,7 @@ import { DebtSheet } from './debts.jsx';
 import { LessonSheet } from './schedule.jsx';
 import { AdviceSheet } from './advice.jsx';
 import { AccPicker, lastAcc, rememberAcc, AccountSheet, AdjustSheet } from './accounts.jsx';
+import { DiarySheet } from './diary.jsx';
 
 const opts = (o) => Object.entries(o).map(([v, l]) => ({ v, l: typeof l === 'string' ? l : l.label }));
 
@@ -573,6 +574,7 @@ export function QuoteSheet({ id, preset = {} }) {
 
 /* ---------------- Tez qo'shish ---------------- */
 const QUICK = [
+  { k: 'diary', l: 'Kundalik', icon: 'diary', c: 'var(--c-diary)' },
   { k: 'task', l: 'Vazifa', icon: 'tasks', c: 'var(--c-tasks)' },
   { k: 'lesson', l: 'Dars', icon: 'calendar', c: 'var(--c-tasks)' },
   { k: 'expense', l: 'Chiqim', icon: 'up', c: 'var(--c-money)' },
@@ -606,4 +608,4 @@ export function QuickAdd() {
   );
 }
 
-export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, shoplist: ShopListSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, account: AccountSheet, adjust: AdjustSheet, lesson: LessonSheet, advice: AdviceSheet, quick: QuickAdd };
+export const SHEETS = { task: TaskSheet, idea: IdeaSheet, plan: PlanSheet, tx: TxSheet, shop: ShopSheet, spend: SpendSheet, shoplist: ShopListSheet, limits: LimitsSheet, book: BookSheet, quote: QuoteSheet, debt: DebtSheet, account: AccountSheet, adjust: AdjustSheet, lesson: LessonSheet, advice: AdviceSheet, quick: QuickAdd, diary: DiarySheet };

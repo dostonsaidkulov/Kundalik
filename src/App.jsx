@@ -13,15 +13,18 @@ import Books, { BookDetail } from './pages/Books.jsx';
 import Thoughts, { PlanDetail } from './pages/Thoughts.jsx';
 import { Search, Settings, Login } from './pages/Other.jsx';
 import { AccountDetail } from './accounts.jsx';
+import Diary, { DiaryView } from './diary.jsx';
+import { InvestPage } from './invest.jsx';
 
 const TABS = [
   { k: 'home', l: 'Bosh sahifa', short: 'Bosh', icon: 'home' },
+  { k: 'diary', l: 'Kundalik', short: 'Kundalik', icon: 'diary' },
   { k: 'tasks', l: 'Vazifalar', short: 'Vazifalar', icon: 'tasks' },
   { k: 'money', l: 'Moliya', short: 'Moliya', icon: 'wallet' },
   { k: 'books', l: 'Kitoblar', short: 'Kitoblar', icon: 'book' },
   { k: 'thoughts', l: 'Fikrlar', short: 'Fikrlar', icon: 'bulb' },
 ];
-const VIEWS = { book: BookDetail, plan: PlanDetail, search: Search, settings: Settings, account: AccountDetail };
+const VIEWS = { book: BookDetail, plan: PlanDetail, search: Search, settings: Settings, account: AccountDetail, diary: DiaryView, invest: InvestPage };
 
 export default function App() {
   const [backend, setBackend] = useState(null);
@@ -113,7 +116,9 @@ function Shell() {
         if (m[2] === 'expense') api.openSheet('tx', { preset: { type: 'expense' } });
         else if (m[2] === 'task') api.openSheet('task');
         else if (m[2] === 'idea') api.openSheet('idea');
-      } else if (m[2] === 'money') api.go('money', 'tx');
+        else if (m[2] === 'diary') api.openSheet('diary');
+      } else if (m[2] === 'diary') api.go('diary');
+      else if (m[2] === 'money') api.go('money', 'tx');
       else if (m[2] === 'tasks') api.go('tasks', 'tasks');
       else if (m[2] === 'advice') api.go('thoughts', 'advice');
     };
@@ -135,6 +140,7 @@ function Shell() {
     const V = VIEWS[top.view];
     content = <V key={top.view + (top.props.id || '')} {...top.props} />;
   } else if (tab === 'home') content = <Home />;
+  else if (tab === 'diary') content = <Diary sub={subs.diary} setSub={setSub('diary')} />;
   else if (tab === 'tasks') content = <Tasks sub={subs.tasks} setSub={setSub('tasks')} day={subs.day} setDay={setSub('day')} />;
   else if (tab === 'money') content = <Finance sub={subs.money} setSub={setSub('money')} />;
   else if (tab === 'books') content = <Books sub={subs.books} setSub={setSub('books')} />;
@@ -142,6 +148,7 @@ function Shell() {
 
   const S = sheet && SHEETS[sheet.type];
   const fabAction = () => {
+    if (top?.view === 'diary' || (!top && tab === 'diary')) return api.openSheet('diary');
     if (top?.view === 'book') return api.openSheet('quote', { preset: { bookId: top.props.id } });
     if (top?.view === 'account') return api.openSheet('tx', { preset: { type: 'expense', acc: top.props.id } });
     if (top?.view === 'plan') return api.openSheet('task', { preset: { planId: top.props.id, due: '' } });
@@ -172,7 +179,7 @@ function Shell() {
         <main className="main" ref={mainRef}>
           {db.loaded ? content : <div className="loading">Yuklanmoqda…</div>}
         </main>
-        {top?.view !== 'search' && top?.view !== 'settings' && !(tab === 'money' && subs.money === 'shop' && !top) && (
+        {top?.view !== 'search' && top?.view !== 'settings' && top?.view !== 'invest' && !(tab === 'money' && subs.money === 'shop' && !top) && (
           <button className="fab" onClick={fabAction} aria-label="Qo'shish"><Icon name="plus" size={26} stroke={2.2} /></button>
         )}
       </div>

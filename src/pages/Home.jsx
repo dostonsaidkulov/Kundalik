@@ -8,6 +8,7 @@ import { debtTotals } from '../debts.jsx';
 import { totalBalance } from '../accounts.jsx';
 import { TodayLessons } from '../schedule.jsx';
 import { AdviceOfDay } from '../advice.jsx';
+import { HomeDiaryCard } from '../diary.jsx';
 
 export default function Home() {
   const db = useData();
@@ -75,6 +76,7 @@ export default function Home() {
           )}
         </section>
 
+        <HomeDiaryCard />
         <section className="card money-card" style={{ '--sc': 'var(--c-money)' }} onClick={() => app.go('money')}>
           <div className="card-head">
             <span className="card-ic"><Icon name="wallet" size={18} /></span>

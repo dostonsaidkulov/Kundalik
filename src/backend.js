@@ -50,12 +50,15 @@ async function firebaseBackend() {
     signUp: (e, p) => A.createUserWithEmailAndPassword(auth, e, p),
     reset: (e) => A.sendPasswordResetEmail(auth, e),
     signOut: () => A.signOut(auth),
-    subscribe(uid, col, cb) {
+    subscribe(uid, col, cb, onErr) {
       return F.onSnapshot(
         F.collection(db, 'users', uid, col),
         { includeMetadataChanges: false },
         (snap) => cb(snap.docs.map((d) => ({ ...d.data(), id: d.id }))),
-        (err) => console.error(col, err),
+        (err) => {
+          console.error(col, err);
+          onErr && onErr(err);
+        },
       );
     },
     // Yozuvlar oflayn ham darhol ko'rinadi; server tasdig'ini kutmaymiz.
